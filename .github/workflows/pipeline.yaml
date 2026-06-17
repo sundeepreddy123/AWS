@@ -12,4 +12,4 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - run: kubectl apply -f k8s/
+      - run: kubectl get pods -A
