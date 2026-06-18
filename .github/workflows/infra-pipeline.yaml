@@ -42,5 +42,14 @@ jobs:
       - name: Terraform validate
         run: terraform validate
         working-directory: ${{ env.TF_DIR }}
+      
+      - name: Terraform plan
+        run: terraform plan -out=tfplan -input=false
+        working-directory: ${{ env.TF_DIR }}
+ 
+      - name: Terraform apply
+        run: terraform apply -input=false tfplan
+        working-directory: ${{ env.TF_DIR }}
+        
 
 
