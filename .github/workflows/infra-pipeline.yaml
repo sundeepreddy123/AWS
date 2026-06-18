@@ -1,9 +1,6 @@
 name: infra-pipeline
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
 
 jobs:
@@ -25,3 +22,5 @@ jobs:
           aws-region: eu-west-1
 
       - run: aws sts get-caller-identity
+
+      
