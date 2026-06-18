@@ -9,7 +9,3 @@ output "public_subnets" {
 output "private_subnets" {
   value = module.vpc.private_subnets
 }
-
-output "nat_gateways" {
-  value = module.vpc.nat_gateways
-}
