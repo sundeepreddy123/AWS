@@ -13,7 +13,7 @@ jobs:
       TF_VERSION: 'latest'
       TF_DIR: ${{ github.workspace }}
       TFSTATE_BUCKET: rsrinfra-lockfile
-      TFSTATE_PREFIX: aws
+      TFSTATE_PREFIX: dev
       ENV: rsr
     steps:
       - name: Checkout
