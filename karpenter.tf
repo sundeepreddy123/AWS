@@ -160,11 +160,14 @@ resource "aws_ec2_tag" "private_subnet_discovery" {
   key         = "karpenter.sh/discovery"
   value       = aws_eks_cluster.this.name
 }
-
+data "aws_eks_cluster" "this" {
+  name = aws_eks_cluster.this.name
+}
 resource "aws_ec2_tag" "cluster_sg_discovery" {
-  resource_id = aws_security_group.eks_cluster.id
-  key         = "karpenter.sh/discovery"
-  value       = aws_eks_cluster.this.name
+  resource_id = data.aws_eks_cluster.this.vpc_config[0].cluster_security_group_id
+
+  key   = "karpenter.sh/discovery"
+  value = aws_eks_cluster.this.name
 }
 
 resource "kubectl_manifest" "ec2_nodeclass" {
