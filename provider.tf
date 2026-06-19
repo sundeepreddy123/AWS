@@ -7,57 +7,57 @@ terraform{
 }
 
 
-data "aws_eks_cluster" "this" {
-  name = aws_eks_cluster.this.name
-}
+# data "aws_eks_cluster" "this" {
+#   name = aws_eks_cluster.this.name
+# }
 
-data "aws_eks_cluster_auth" "this" {
-  name = aws_eks_cluster.this.name
-}
+# data "aws_eks_cluster_auth" "this" {
+#   name = aws_eks_cluster.this.name
+# }
 
-provider "helm" {
-  kubernetes = {
-    host = data.aws_eks_cluster.this.endpoint
+# provider "helm" {
+#   kubernetes = {
+#     host = data.aws_eks_cluster.this.endpoint
 
-    cluster_ca_certificate = base64decode(
-      data.aws_eks_cluster.this.certificate_authority[0].data
-    )
+#     cluster_ca_certificate = base64decode(
+#       data.aws_eks_cluster.this.certificate_authority[0].data
+#     )
 
-    token = data.aws_eks_cluster_auth.this.token
-  }
-}
+#     token = data.aws_eks_cluster_auth.this.token
+#   }
+# }
 
-provider "kubernetes" {
-  host = data.aws_eks_cluster.this.endpoint
+# provider "kubernetes" {
+#   host = data.aws_eks_cluster.this.endpoint
 
-  cluster_ca_certificate = base64decode(
-    data.aws_eks_cluster.this.certificate_authority[0].data
-  )
+#   cluster_ca_certificate = base64decode(
+#     data.aws_eks_cluster.this.certificate_authority[0].data
+#   )
 
-  token = data.aws_eks_cluster_auth.this.token
-}
+#   token = data.aws_eks_cluster_auth.this.token
+# }
 
-provider "kubectl" {
-  host                   = aws_eks_cluster.this.endpoint
+# provider "kubectl" {
+#   host                   = aws_eks_cluster.this.endpoint
 
-  cluster_ca_certificate = base64decode(
-    aws_eks_cluster.this.certificate_authority[0].data
-  )
+#   cluster_ca_certificate = base64decode(
+#     aws_eks_cluster.this.certificate_authority[0].data
+#   )
 
-  load_config_file = false
+#   load_config_file = false
 
-  exec {
-    api_version = "client.authentication.k8s.io/v1beta1"
-    command     = "aws"
+#   exec {
+#     api_version = "client.authentication.k8s.io/v1beta1"
+#     command     = "aws"
 
-    args = [
-      "eks",
-      "get-token",
-      "--cluster-name",
-      aws_eks_cluster.this.name
-    ]
-  }
-}
+#     args = [
+#       "eks",
+#       "get-token",
+#       "--cluster-name",
+#       aws_eks_cluster.this.name
+#     ]
+#   }
+# }
 # provider "helm" {
 #   kubernetes = {
 #     host                   = module.eks.cluster_endpoint
