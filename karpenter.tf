@@ -3,12 +3,7 @@ resource "aws_iam_instance_profile" "karpenter" {
   name = "${var.cluster_name}-karpenter-profile"
   role = aws_iam_role.karpenter_node.name
 }
-// Create Karpenter Namespace
-resource "kubernetes_namespace_v1" "karpenter" {
-  metadata {
-    name = "karpenter"
-  }
-}
+
 // Create Fargate Profile for Karpenter
 resource "aws_eks_fargate_profile" "karpenter" {
 
