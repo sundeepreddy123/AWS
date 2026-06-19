@@ -239,11 +239,11 @@ spec:
         values:
         - on-demand
 
-      - key: node.kubernetes.io/instance-type
-        operator: In
-        values:
-        - t3.large
-        - m5.large
+    #   - key: node.kubernetes.io/instance-type
+    #     operator: In
+    #     values:
+    #     - t3.large
+    #     - m5.large
 
   limits:
     cpu: 100
