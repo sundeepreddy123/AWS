@@ -191,7 +191,7 @@ spec:
   amiSelectorTerms:
     - alias: al2023@latest
 
-  role: ${aws_iam_role.karpenter_node.arn}
+  role: ${aws_iam_role.karpenter_node.name}
 
   subnetSelectorTerms:
   - tags:
@@ -217,10 +217,10 @@ metadata:
 spec:
   template:
     spec:
-    #   taints:
-    #   - key: workload
-    #     value: app
-    #     effect: NoSchedule
+      taints:
+      - key: workload
+        value: app
+        effect: NoSchedule
 
       nodeClassRef:
         group: karpenter.k8s.aws
