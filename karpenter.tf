@@ -104,11 +104,17 @@ resource "aws_iam_role_policy_attachment" "karpenter_controller" {
   policy_arn = aws_iam_policy.karpenter_controller.arn
 }
 
+resource "kubernetes_namespace_v1" "karpenter" {
+  metadata {
+    name = "karpenter"
+  }
+}
+
 resource "kubernetes_service_account_v1" "karpenter" {
 
   metadata {
     name      = "karpenter"
-    namespace = "karpenter"
+    namespace = kubernetes_namespace_v1.karpenter.metadata[0].name
 
     annotations = {
       "eks.amazonaws.com/role-arn" = aws_iam_role.karpenter_controller.arn
