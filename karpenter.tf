@@ -4,7 +4,7 @@ resource "aws_iam_instance_profile" "karpenter" {
   role = aws_iam_role.karpenter_node.name
 }
 // Create Karpenter Namespace
-resource "kubernetes_namespace" "karpenter" {
+resource "kubernetes_namespace_v1" "karpenter" {
   metadata {
     name = "karpenter"
   }
