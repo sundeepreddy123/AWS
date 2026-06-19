@@ -1,3 +1,6 @@
 aws_region     = "ap-south-1"
 environment    = "dev"
 project_name   = "rsr-infra"
+cluster_name   = "rsr-eks-cluster"
+cluster_version = "1.34"
+iam_role_arn  = "arn:aws:iam::729859598223:user/sundeepreddy"
