@@ -7,7 +7,7 @@ module "eks" {
   version = "~> 21.0"
   # Gives Terraform identity admin access to cluster which will
   # allow deploying resources (Karpenter) into the cluster
-    enable_cluster_creator_admin_permissions = true
+    enable_cluster_creator_admin_permissions = false
     #endpoint_public_access_cidrs = var.cluster_endpoint_public_access_cidrs
 
 
