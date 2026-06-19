@@ -73,6 +73,7 @@ resource "aws_iam_policy" "karpenter_controller" {
 
         Action = [
           "ec2:RunInstances",
+          "ec2:CreateFleet",
           "ec2:TerminateInstances",
           "ec2:DescribeInstances",
           "ec2:DescribeInstanceTypes",
