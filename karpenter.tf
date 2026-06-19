@@ -103,3 +103,46 @@ resource "aws_iam_role_policy_attachment" "karpenter_controller" {
 
   policy_arn = aws_iam_policy.karpenter_controller.arn
 }
+
+resource "kubernetes_service_account_v1" "karpenter" {
+
+  metadata {
+    name      = "karpenter"
+    namespace = "karpenter"
+
+    annotations = {
+      "eks.amazonaws.com/role-arn" = aws_iam_role.karpenter_controller.arn
+    }
+  }
+
+  depends_on = [
+    kubernetes_namespace_v1.karpenter
+  ]
+}
+
+resource "helm_release" "karpenter" {
+
+  name       = "karpenter"
+  namespace  = "karpenter"
+
+  repository = "oci://public.ecr.aws/karpenter"
+  chart      = "karpenter"
+
+  version = "1.3.3"
+
+  values = [
+    yamlencode({
+      settings = {
+        clusterName = aws_eks_cluster.this.name
+      }
+      serviceAccount = {
+        create = false
+        name   = "karpenter"
+      }
+    })
+  ]
+
+  depends_on = [
+    kubernetes_service_account_v1.karpenter
+  ]
+}
