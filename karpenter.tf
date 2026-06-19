@@ -182,6 +182,9 @@ metadata:
 spec:
   amiFamily: AL2023
 
+  amiSelectorTerms:
+    - alias: al2023@latest
+
   role: ${aws_iam_role.karpenter_node.name}
 
   subnetSelectorTerms:
