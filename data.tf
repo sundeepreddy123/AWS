@@ -11,5 +11,7 @@ data "aws_subnets" "private" {
 
   tags = {
     Tier = "Private"
+
+    "karpenter.sh/discovery" = aws_eks_cluster.this.name
   }
 }
