@@ -58,8 +58,8 @@ module "eks" {
     }
   }
 
-  vpc_id                   = module.vpc_id
-  subnet_ids               = module.private_subnets
+  vpc_id                   = module.vpc.vpc_id
+  subnet_ids               = module.vpc.private_subnets
   #control_plane_subnet_ids = module.vpc.intra_subnets
    authentication_mode = "API"
   # Fargate profiles use the cluster primary security group so these are not utilized
