@@ -152,3 +152,89 @@ resource "helm_release" "karpenter" {
     kubernetes_service_account_v1.karpenter
   ]
 }
+
+resource "aws_ec2_tag" "private_subnet_discovery" {
+  for_each    = toset(data.aws_subnets.private.ids)
+
+  resource_id = each.value
+  key         = "karpenter.sh/discovery"
+  value       = aws_eks_cluster.this.name
+}
+
+resource "aws_ec2_tag" "cluster_sg_discovery" {
+  resource_id = aws_security_group.eks_cluster.id
+  key         = "karpenter.sh/discovery"
+  value       = aws_eks_cluster.this.name
+}
+
+resource "kubectl_manifest" "ec2_nodeclass" {
+
+  depends_on = [
+    helm_release.karpenter
+  ]
+
+  yaml_body = <<YAML
+apiVersion: karpenter.k8s.aws/v1
+kind: EC2NodeClass
+metadata:
+  name: default
+spec:
+  amiFamily: AL2023
+
+  role: ${aws_iam_role.karpenter_node.name}
+
+  subnetSelectorTerms:
+  - tags:
+      karpenter.sh/discovery: ${aws_eks_cluster.this.name}
+
+  securityGroupSelectorTerms:
+  - tags:
+      karpenter.sh/discovery: ${aws_eks_cluster.this.name}
+YAML
+}
+
+resource "kubectl_manifest" "nodepool" {
+
+  depends_on = [
+    kubectl_manifest.ec2_nodeclass
+  ]
+
+  yaml_body = <<YAML
+apiVersion: karpenter.sh/v1
+kind: NodePool
+metadata:
+  name: default
+spec:
+  template:
+    spec:
+      nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
+        name: default
+
+      requirements:
+
+      - key: kubernetes.io/arch
+        operator: In
+        values:
+        - amd64
+
+      - key: karpenter.sh/capacity-type
+        operator: In
+        values:
+        - on-demand
+
+      - key: node.kubernetes.io/instance-type
+        operator: In
+        values:
+        - t3.large
+        - m5.large
+
+  limits:
+    cpu: 100
+
+  disruption:
+    consolidationPolicy: WhenEmptyOrUnderutilized
+    consolidateAfter: 30s
+YAML
+}
