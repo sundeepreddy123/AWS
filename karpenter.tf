@@ -88,7 +88,13 @@ resource "aws_iam_policy" "karpenter_controller" {
 
           "pricing:GetProducts",
 
-          "iam:PassRole"
+          "iam:PassRole",
+          "iam:GetInstanceProfile",
+          "iam:CreateInstanceProfile",
+          "iam:AddRoleToInstanceProfile",
+          "iam:RemoveRoleFromInstanceProfile",
+          "iam:DeleteInstanceProfile",
+          "iam:TagInstanceProfile"
         ]
 
         Resource = "*"
@@ -185,7 +191,7 @@ spec:
   amiSelectorTerms:
     - alias: al2023@latest
 
-  role: ${aws_iam_role.karpenter_node.name}
+  role: ${aws_iam_role.karpenter_node.arn}
 
   subnetSelectorTerms:
   - tags:
