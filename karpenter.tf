@@ -211,6 +211,11 @@ metadata:
 spec:
   template:
     spec:
+      taints:
+      - key: workload
+        value: app
+        effect: NoSchedule
+
       nodeClassRef:
         group: karpenter.k8s.aws
         kind: EC2NodeClass
