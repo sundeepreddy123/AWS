@@ -1,17 +1,17 @@
 variable "aws_region" {
   description = "AWS region"
   type        = string
-  default     = "ap-south-1"
+  default     = NULL
 }
 
 variable "environment" {
   description = "Deployment environment"
   type        = string
-  default     = "dev"
+  default     = NULL
 }
 
 variable "project_name" {
   description = "Project name"
   type        = string
-  default     = "rsr-infra"
+  default     = NULL
 }
