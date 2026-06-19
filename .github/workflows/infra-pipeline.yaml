@@ -48,7 +48,7 @@ jobs:
         working-directory: ${{ env.TF_DIR }}
  
       - name: Terraform apply
-        run: terraform apply -input=tfplan -var-file=variables-${{ env.TFSTATE_PREFIX }}.tfvars
+        run: terraform apply -input=false tfplan -var-file=variables-${{ env.TFSTATE_PREFIX }}.tfvars
         working-directory: ${{ env.TF_DIR }}
       
       # - name: Terrafrom destroy
