@@ -1,0 +1,211 @@
+# Karpenter Manual Setup (No Module)
+# This creates OIDC provider, IAM role, policies, and service account
+
+# 1. OIDC Provider for IRSA (IAM Roles for Service Accounts)
+data "aws_iam_openid_connect_provider" "eks" {
+  arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/${replace(module.eks.oidc_provider_arn, "/^(.*provider/)/", "")}"
+}
+
+resource "aws_iam_openid_connect_provider" "eks" {
+  client_id_list  = ["sts.amazonaws.com"]
+  thumbprint_list = [data.tls_certificate.cluster.certificates[0].sha1_fingerprint]
+  url             = module.eks.cluster_oidc_issuer_url
+
+  tags = {
+    Name = "karpenter-oidc"
+  }
+}
+
+# Get TLS certificate for OIDC provider
+data "tls_certificate" "cluster" {
+  url = module.eks.cluster_oidc_issuer_url
+}
+
+data "aws_caller_identity" "current" {}
+
+# 2. IAM Role for Karpenter Controller
+resource "aws_iam_role" "karpenter_controller" {
+  name               = "${var.cluster_name}-karpenter-controller"
+  assume_role_policy = data.aws_iam_policy_document.karpenter_assume_role.json
+
+  tags = {
+    Name = "${var.cluster_name}-karpenter-controller"
+  }
+}
+
+# Trust policy for service account
+data "aws_iam_policy_document" "karpenter_assume_role" {
+  statement {
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+    effect  = "Allow"
+
+    principals {
+      type        = "Federated"
+      identifiers = [aws_iam_openid_connect_provider.eks.arn]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "${replace(module.eks.cluster_oidc_issuer_url, "https://", "")}:sub"
+      values   = ["system:serviceaccount:karpenter:karpenter"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "${replace(module.eks.cluster_oidc_issuer_url, "https://", "")}:aud"
+      values   = ["sts.amazonaws.com"]
+    }
+  }
+}
+
+# 3. IAM Policy for Karpenter Controller (split to stay under 6144 char limit)
+# Policy 1: Core permissions
+resource "aws_iam_policy" "karpenter_controller_core" {
+  name        = "${var.cluster_name}-karpenter-controller-core"
+  description = "Karpenter controller core permissions"
+  policy      = data.aws_iam_policy_document.karpenter_controller_core.json
+}
+
+data "aws_iam_policy_document" "karpenter_controller_core" {
+  statement {
+    sid    = "KarpenterEC2Permissions"
+    effect = "Allow"
+    actions = [
+      "ec2:CreateFleet",
+      "ec2:CreateLaunchTemplate",
+      "ec2:CreateTags",
+      "ec2:DescribeAvailabilityZones",
+      "ec2:DescribeImages",
+      "ec2:DescribeInstances",
+      "ec2:DescribeInstanceTypeOfferings",
+      "ec2:DescribeInstanceTypes",
+      "ec2:DescribeLaunchTemplateVersions",
+      "ec2:DescribeSecurityGroups",
+      "ec2:DescribeSnapshots",
+      "ec2:DescribeSpotPriceHistory",
+      "ec2:DescribeSubnets",
+      "ec2:DescribeTags",
+      "ec2:DescribeVpcs",
+      "ec2:GetInstanceTypesFromInstanceRequirements",
+      "ec2:RunInstances",
+      "ec2:TerminateInstances",
+    ]
+    resources = ["*"]
+  }
+
+  statement {
+    sid       = "KarpenterEC2TaggingPermissions"
+    effect    = "Allow"
+    actions   = ["ec2:CreateTags"]
+    resources = ["arn:aws:ec2:*:*:instance/*", "arn:aws:ec2:*:*:security-group/*"]
+    condition {
+      test     = "StringEquals"
+      variable = "ec2:CreateAction"
+      values   = ["RunInstances"]
+    }
+  }
+
+  statement {
+    sid       = "KarpenterEC2TerminatingPermissions"
+    effect    = "Allow"
+    actions   = ["ec2:TerminateInstances"]
+    resources = ["arn:aws:ec2:*:*:instance/*"]
+    condition {
+      test     = "StringLike"
+      variable = "ec2:ResourceTag/karpenter.sh/do-not-evict"
+      values   = ["false"]
+    }
+  }
+}
+
+# Policy 2: Pricing and capacity
+resource "aws_iam_policy" "karpenter_controller_pricing" {
+  name        = "${var.cluster_name}-karpenter-controller-pricing"
+  description = "Karpenter controller pricing permissions"
+  policy      = data.aws_iam_policy_document.karpenter_controller_pricing.json
+}
+
+data "aws_iam_policy_document" "karpenter_controller_pricing" {
+  statement {
+    sid    = "KarpenterPricingPermissions"
+    effect = "Allow"
+    actions = [
+      "pricing:GetSpotPriceHistory",
+    ]
+    resources = ["*"]
+  }
+
+  statement {
+    sid    = "KarpenterEC2FleetPermissions"
+    effect = "Allow"
+    actions = [
+      "ec2:ModifyFleet",
+      "ec2:DescribeFleetHistory",
+      "ec2:DescribeFleets",
+      "ec2:DescribeFleetErrors",
+    ]
+    resources = ["*"]
+  }
+}
+
+# Policy 3: Tagging and ASG
+resource "aws_iam_policy" "karpenter_controller_tags" {
+  name        = "${var.cluster_name}-karpenter-controller-tags"
+  description = "Karpenter controller tagging and ASG permissions"
+  policy      = data.aws_iam_policy_document.karpenter_controller_tags.json
+}
+
+data "aws_iam_policy_document" "karpenter_controller_tags" {
+  statement {
+    sid    = "KarpenterTaggingPermissions"
+    effect = "Allow"
+    actions = [
+      "ec2:DeleteTags",
+      "ec2:DescribeTags",
+    ]
+    resources = ["arn:aws:ec2:*:*:instance/*"]
+  }
+
+  statement {
+    sid    = "KarpenterAutoscalingPermissions"
+    effect = "Allow"
+    actions = [
+      "autoscaling:CreateAutoScalingGroup",
+      "autoscaling:DeleteAutoScalingGroup",
+      "autoscaling:DescribeAutoScalingGroups",
+      "autoscaling:DescribeAutoScalingInstances",
+      "autoscaling:DescribeLaunchConfigurations",
+      "autoscaling:DescribeScalingActivities",
+      "autoscaling:DescribeTags",
+      "autoscaling:UpdateAutoScalingGroup",
+    ]
+    resources = ["*"]
+  }
+}
+
+# 4. Attach policies to role
+resource "aws_iam_role_policy_attachment" "karpenter_controller_core" {
+  role       = aws_iam_role.karpenter_controller.name
+  policy_arn = aws_iam_policy.karpenter_controller_core.arn
+}
+
+resource "aws_iam_role_policy_attachment" "karpenter_controller_pricing" {
+  role       = aws_iam_role.karpenter_controller.name
+  policy_arn = aws_iam_policy.karpenter_controller_pricing.arn
+}
+
+resource "aws_iam_role_policy_attachment" "karpenter_controller_tags" {
+  role       = aws_iam_role.karpenter_controller.name
+  policy_arn = aws_iam_policy.karpenter_controller_tags.arn
+}
+
+# 5. Output the role ARN for use in Kubernetes annotations
+output "karpenter_controller_role_arn" {
+  description = "ARN of the Karpenter controller IAM role"
+  value       = aws_iam_role.karpenter_controller.arn
+}
+
+output "cluster_oidc_issuer_url" {
+  description = "The URL on the EKS cluster OIDC Issuer"
+  value       = module.eks.cluster_oidc_issuer_url
+}

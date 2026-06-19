@@ -1,0 +1,184 @@
+# Kubernetes resources for Karpenter
+# Service account, namespace, and NodePool configuration
+
+provider "kubernetes" {
+  host                   = module.eks.cluster_endpoint
+  cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
+  token                  = data.aws_eks_cluster_auth.cluster.token
+}
+
+provider "helm" {
+  kubernetes {
+    host                   = module.eks.cluster_endpoint
+    cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
+    token                  = data.aws_eks_cluster_auth.cluster.token
+  }
+}
+
+data "aws_eks_cluster_auth" "cluster" {
+  name = module.eks.cluster_name
+}
+
+# 1. Karpenter Namespace
+resource "kubernetes_namespace" "karpenter" {
+  depends_on = [module.eks]
+  metadata {
+    name = "karpenter"
+  }
+}
+
+# 2. Service Account for Karpenter Controller
+resource "kubernetes_service_account" "karpenter" {
+  depends_on = [kubernetes_namespace.karpenter]
+  metadata {
+    name      = "karpenter"
+    namespace = "karpenter"
+    annotations = {
+      "eks.amazonaws.com/role-arn" = aws_iam_role.karpenter_controller.arn
+    }
+  }
+}
+
+# 3. Install Karpenter Helm Chart
+resource "helm_release" "karpenter" {
+  depends_on = [kubernetes_service_account.karpenter, aws_iam_role_policy_attachment.karpenter_controller_core]
+
+  name       = "karpenter"
+  namespace  = "karpenter"
+  repository = "oci://public.ecr.aws/karpenter"
+  chart      = "karpenter"
+  version    = "v0.36.0" # Check https://gallery.ecr.aws/karpenter/karpenter for latest
+
+  set {
+    name  = "serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"
+    value = aws_iam_role.karpenter_controller.arn
+  }
+
+  set {
+    name  = "settings.aws.clusterName"
+    value = module.eks.cluster_name
+  }
+
+  set {
+    name  = "settings.aws.interruptionQueue"
+    value = module.eks.cluster_name
+  }
+
+  values = [
+    yamlencode({
+      serviceAccount = {
+        name = "karpenter"
+      }
+      settings = {
+        aws = {
+          clusterName = module.eks.cluster_name
+        }
+      }
+    })
+  ]
+}
+
+# 4. Karpenter NodePool (replaces provisioner)
+resource "kubernetes_manifest" "karpenter_nodepool" {
+  depends_on = [helm_release.karpenter]
+
+  manifest = {
+    apiVersion = "karpenter.sh/v1beta1"
+    kind       = "NodePool"
+    metadata = {
+      name      = "default"
+      namespace = "karpenter"
+    }
+    spec = {
+      template = {
+        spec = {
+          requirements = [
+            {
+              key      = "kubernetes.io/arch"
+              operator = "In"
+              values   = ["amd64"]
+            },
+            {
+              key      = "karpenter.sh/capacity-type"
+              operator = "In"
+              values   = ["spot", "on-demand"]
+            },
+            {
+              key      = "node.kubernetes.io/instance-type"
+              operator = "In"
+              values   = ["t3.medium", "t3.large", "t3.xlarge"]
+            },
+            {
+              key      = "kubernetes.io/os"
+              operator = "In"
+              values   = ["linux"]
+            }
+          ]
+          nodeClassRef = {
+            name = "default"
+          }
+          expireAfter = "720h"
+        }
+      }
+      limits = {
+        resources = {
+          cpu    = "1000"
+          memory = "1000Gi"
+        }
+      }
+      disruption = {
+        consolidateAfter = "30s"
+        expireAfter      = "604800s"
+        budgets = [
+          {
+            nodes    = "10%"
+            duration = "5m"
+          }
+        ]
+      }
+    }
+  }
+}
+
+# 5. EC2NodeClass for Karpenter (Kubernetes API)
+resource "kubernetes_manifest" "karpenter_ec2nodeclass" {
+  depends_on = [helm_release.karpenter]
+
+  manifest = {
+    apiVersion = "karpenter.k8s.aws/v1beta1"
+    kind       = "EC2NodeClass"
+    metadata = {
+      name      = "default"
+      namespace = "karpenter"
+    }
+    spec = {
+      amiFamily = "AL2"
+      role      = "${var.cluster_name}-node"
+      subnetSelector = {
+        "karpenter.sh/discovery" = var.cluster_name
+      }
+      securityGroupSelector = {
+        "karpenter.sh/discovery" = var.cluster_name
+      }
+      blockDeviceMappings = [
+        {
+          deviceName = "/dev/xvda"
+          ebs = {
+            volumeSize          = "100Gi"
+            volumeType          = "gp3"
+            deleteOnTermination = true
+          }
+        }
+      ]
+      userData = base64encode("#!/bin/bash\necho 'Karpenter Node'")
+      tags = {
+        "karpenter.sh/discovery" = var.cluster_name
+      }
+    }
+  }
+}
+
+output "karpenter_nodepool_status" {
+  description = "Status of Karpenter NodePool deployment"
+  value       = "Karpenter NodePool and EC2NodeClass deployed"
+}
