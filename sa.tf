@@ -1,4 +1,4 @@
-resource "kubernetes_service_account" "alb_controller" {
+resource "kubernetes_service_account_v1" "alb_controller" {
 
   metadata {
 
