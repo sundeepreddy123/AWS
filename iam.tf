@@ -77,7 +77,43 @@ resource "aws_iam_role_policy_attachment" "ecr" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
 
 }
-                                                     
+
+// Create IAM Role (IRSA)
+resource "aws_iam_role" "aws_load_balancer_controller" {
+
+  name = "AWSLoadBalancerControllerRole"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+
+    Statement = [{
+      Effect = "Allow"
+
+      Principal = {
+        Federated = aws_iam_openid_connect_provider.eks.arn
+      }
+
+      Action = "sts:AssumeRoleWithWebIdentity"
+
+      Condition = {
+        StringEquals = {
+          "${replace(
+            aws_iam_openid_connect_provider.eks.url,
+            "https://",
+            ""
+          )}:sub" ="system:serviceaccount:kube-system:aws-load-balancer-controller"
+        }
+      }
+    }]
+  })
+}
+resource "aws_iam_role_policy_attachment" "lb_controller" {
+
+  role = aws_iam_role.aws_load_balancer_controller.name
+
+  policy_arn = aws_iam_policy.lb_controller.arn
+}
+
 // fargate-role
 
 # resource "aws_iam_role" "fargate" {

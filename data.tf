@@ -29,5 +29,5 @@ resource "aws_iam_openid_connect_provider" "eks" {
     data.tls_certificate.eks.certificates[0].sha1_fingerprint
   ]
 
-  url = aws_eks_cluster.dev.identity[0].oidc[0].issuer
-}
+  url = aws_eks_cluster.dev.identity[0].oidc[0].issuer // This is the OIDC issuer URL for the EKS cluster, which is used to configure the IAM OIDC provider for service account authentication. that makes the IAM OIDC provider trust the exact HTTPS certificate for your EKS OIDC issuer.connection 
+  }
