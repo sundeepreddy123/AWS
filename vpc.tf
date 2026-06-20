@@ -22,7 +22,8 @@ resource "aws_subnet" "public" {
   tags = {
     Name = "${var.env}-public-${count.index + 1}"
     Tier = "Public"
-    kubernetes.io/role/elb = 1
+     "kubernetes.io/role/elb" = "1"
+     "kubernetes.io/cluster/${var.cluster_name}" = "shared"
   }
 }
 
@@ -37,7 +38,8 @@ resource "aws_subnet" "private" {
   tags = {
     Name = "${var.env}-private-${count.index + 1}"
     Tier = "Private"
-    kubernetes.io/role/internal-elb = 1
+    "kubernetes.io/role/internal-elb" = "1"
+    "kubernetes.io/cluster/${var.cluster_name}" = "shared"
   }
 }
 

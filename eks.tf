@@ -18,9 +18,6 @@ resource "aws_eks_cluster" "dev" {
   depends_on = [
     aws_iam_role_policy_attachment.eks_cluster // EKS cluster will be created only after the IAM role is attached to the policy 
   ]
-  tags = {
-    kubernetes.io/cluster/var.cluster_name = "shared" // Tag to identify the cluster
-  }
 }
 
 
