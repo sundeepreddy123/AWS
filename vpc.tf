@@ -22,8 +22,7 @@ resource "aws_subnet" "public" {
   tags = {
     Name = "${var.env}-public-${count.index + 1}"
     Tier = "Public"
-    "karpenter.sh/discovery" = aws_eks_cluster.dev.name
-
+    kubernetes.io/role/elb = 1
   }
 }
 
@@ -38,7 +37,7 @@ resource "aws_subnet" "private" {
   tags = {
     Name = "${var.env}-private-${count.index + 1}"
     Tier = "Private"
-    "karpenter.sh/discovery" = aws_eks_cluster.dev.name
+    kubernetes.io/role/internal-elb = 1
   }
 }
 
