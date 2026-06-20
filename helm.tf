@@ -15,6 +15,7 @@ namespace="kube-system"
 
 values = [<<EOF
 clusterName: ${aws_eks_cluster.dev.name}
+vpcId: ${aws_vpc.main.id}
 serviceAccount:
   create: false
   name: aws-load-balancer-controller
