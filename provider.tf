@@ -16,24 +16,24 @@ data "aws_eks_cluster_auth" "this" {
 
 provider "helm" {
   kubernetes = {
-    host = aws_eks_cluster.dev.endpoint
+    host = data.aws_eks_cluster.dev.endpoint
 
     cluster_ca_certificate = base64decode(
       data.aws_eks_cluster.dev.certificate_authority[0].data
     )
 
-    token = aws_eks_cluster_auth.dev.token
+    token = data.aws_eks_cluster_auth.dev.token
   }
 }
 
 provider "kubernetes" {
-  host = aws_eks_cluster.dev.endpoint
+  host = data.aws_eks_cluster.dev.endpoint
 
   cluster_ca_certificate = base64decode(
     aws_eks_cluster.dev.certificate_authority[0].data
   )
 
-  token = aws_eks_cluster_auth.dev.token
+  token = data.aws_eks_cluster_auth.dev.token
 }
 
 # provider "kubectl" {
