@@ -23,7 +23,7 @@ EOF
 
 
 depends_on=[
-kubernetes_service_account_v1.aws_load_balancer_controller.metadata[0].name
+kubernetes_service_account_v1.alb_controller.metadata[0].name
 ]
 
 }
