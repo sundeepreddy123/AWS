@@ -22,7 +22,6 @@ serviceAccount:
 EOF
 ]
 
-
 depends_on=[
     kubernetes_service_account_v1.alb_controller
 ]
