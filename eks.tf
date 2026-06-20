@@ -1,4 +1,4 @@
-resource "aws_eks_cluster" "this" {
+resource "aws_eks_cluster" "dev" {
 
   name = var.cluster_name
 
@@ -8,7 +8,7 @@ resource "aws_eks_cluster" "this" {
 
   vpc_config {
 
-    subnet_ids = aws_subnet.private[*].ids   // EKS cluster will be created in private subnets
+    subnet_ids = data.aws_subnets.private.ids   // EKS cluster will be created in private subnets
 
     endpoint_private_access = true // EKS cluster will be accessible only from private subnets
 
