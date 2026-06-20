@@ -78,7 +78,7 @@ resource "aws_iam_role_policy_attachment" "ecr" {
 
 }
 
-// Create IAM Role (IRSA)
+// IAM Role for IRSA (Trust relationship)
 resource "aws_iam_role" "aws_load_balancer_controller" {
 
   name = "AWSLoadBalancerControllerRole"
@@ -107,11 +107,20 @@ resource "aws_iam_role" "aws_load_balancer_controller" {
     }]
   })
 }
+
+// IAM Policy for AWS Load Balancer Controller permissions
+resource "aws_iam_policy" "lb_controller_policy" {
+
+  name = "AWSLoadBalancerControllerIAMPolicy"
+
+  policy = file("iam_policy.json")
+}
+// Attach Policy to Rolewhere iAM role for load 
 resource "aws_iam_role_policy_attachment" "lb_controller" {
 
   role = aws_iam_role.aws_load_balancer_controller.name
 
-  policy_arn = aws_iam_policy.lb_controller.arn
+  policy_arn = aws_iam_policy.lb_controller_policy.arn
 }
 
 // fargate-role
