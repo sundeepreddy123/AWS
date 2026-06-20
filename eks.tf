@@ -19,3 +19,36 @@ resource "aws_eks_cluster" "dev" {
     aws_iam_role_policy_attachment.eks_cluster // EKS cluster will be created only after the IAM role is attached to the policy 
   ]
 }
+
+
+resource "aws_eks_node_group" "general" {
+
+
+  cluster_name = aws_eks_cluster.dev.name
+
+
+  node_group_name = "general"
+
+
+  node_role_arn = aws_iam_role.node.arn
+
+
+  subnet_ids = data.aws_subnets.private.ids
+
+
+  scaling_config {
+
+    desired_size = 2
+
+    max_size = 3
+
+    min_size = 1
+
+  }
+
+
+  instance_types = [
+    "t3.medium"
+  ]
+
+}
