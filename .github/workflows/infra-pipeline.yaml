@@ -37,7 +37,7 @@ jobs:
             -backend-config="bucket=${{ env.TFSTATE_BUCKET }}" \
             -backend-config="key=${{ env.TFSTATE_PREFIX }}/${{ env.ENV }}-terraform.tfstate" \
             -backend-config="region=${{ secrets.AWS_REGION }}"
-          terraform import -var-file=variables-${{ env.TFSTATE_PREFIX }}.tfvars aws_iam_role.node rsr-eks-node-role
+          terraform import -var-file=variables-${{ env.TFSTATE_PREFIX }}.tfvars aws_eks_node_group.general rsr-dev:general
         working-directory: ${{ env.TF_DIR }}
 
       - name: Terraform validate
