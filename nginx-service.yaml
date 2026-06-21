@@ -6,7 +6,7 @@ metadata:
 
 spec:
 
-  type: LoadBalancer # LoadBalancer will create an ELB in AWS and assign a public IP to it
+  type: ClusterIP # LoadBalancer will create an ELB in AWS and assign a public IP to it
 
   selector:
     app: nginx

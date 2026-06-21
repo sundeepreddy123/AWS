@@ -37,7 +37,6 @@ jobs:
             -backend-config="bucket=${{ env.TFSTATE_BUCKET }}" \
             -backend-config="key=${{ env.TFSTATE_PREFIX }}/${{ env.ENV }}-terraform.tfstate" \
             -backend-config="region=${{ secrets.AWS_REGION }}"
-          terraform import -var-file=variables-${{ env.TFSTATE_PREFIX }}.tfvars helm_release.alb kube-system/aws-load-balancer-controller || true
         working-directory: ${{ env.TF_DIR }}
 
       - name: Terraform validate
