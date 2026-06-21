@@ -34,6 +34,8 @@ resource "helm_release" "istiod" {
   version = "1.21.2"
   reset_values = true
 
+  values = [file("istiod-values.yaml")]
+
 }
 
 // installing istio gateway
