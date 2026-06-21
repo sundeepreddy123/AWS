@@ -78,50 +78,50 @@ resource "aws_iam_role_policy_attachment" "ecr" {
 
 }
 
-// IAM Role for IRSA (Trust relationship)
-resource "aws_iam_role" "aws_load_balancer_controller" {
+# // IAM Role for IRSA (Trust relationship)
+# resource "aws_iam_role" "aws_load_balancer_controller" {
 
-  name = "AWSLoadBalancerControllerRole"
+#   name = "AWSLoadBalancerControllerRole"
 
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
+#   assume_role_policy = jsonencode({
+#     Version = "2012-10-17"
 
-    Statement = [{
-      Effect = "Allow"
+#     Statement = [{
+#       Effect = "Allow"
 
-      Principal = {
-        Federated = aws_iam_openid_connect_provider.eks.arn
-      }
+#       Principal = {
+#         Federated = aws_iam_openid_connect_provider.eks.arn
+#       }
 
-      Action = "sts:AssumeRoleWithWebIdentity"
+#       Action = "sts:AssumeRoleWithWebIdentity"
 
-      Condition = {
-        StringEquals = {
-          "${replace(
-            aws_iam_openid_connect_provider.eks.url,
-            "https://",
-            ""
-          )}:sub" ="system:serviceaccount:kube-system:aws-load-balancer-controller"
-        }
-      }
-    }]
-  })
-}
+#       Condition = {
+#         StringEquals = {
+#           "${replace(
+#             aws_iam_openid_connect_provider.eks.url,
+#             "https://",
+#             ""
+#           )}:sub" ="system:serviceaccount:kube-system:aws-load-balancer-controller"
+#         }
+#       }
+#     }]
+#   })
+# }
 
-// IAM Policy for AWS Load Balancer Controller permissions
-resource "aws_iam_policy" "lb_controller_policy" {
+# // IAM Policy for AWS Load Balancer Controller permissions
+# resource "aws_iam_policy" "lb_controller_policy" {
 
-  name = "AWSLoadBalancerControllerIAMPolicy"
+#   name = "AWSLoadBalancerControllerIAMPolicy"
 
-  policy = file("iam_policy.json")
-}
-// Attach Policy to Rolewhere iAM role for load 
-resource "aws_iam_role_policy_attachment" "lb_controller" {
+#   policy = file("iam_policy.json")
+# }
+# // Attach Policy to Rolewhere iAM role for load 
+# resource "aws_iam_role_policy_attachment" "lb_controller" {
 
-  role = aws_iam_role.aws_load_balancer_controller.name
+#   role = aws_iam_role.aws_load_balancer_controller.name
 
-  policy_arn = aws_iam_policy.lb_controller_policy.arn
-}
+#   policy_arn = aws_iam_policy.lb_controller_policy.arn
+# }
 
 // fargate-role
 
