@@ -45,7 +45,7 @@ jobs:
         working-directory: ${{ env.TF_DIR }}
       
       - name: Terraform plan
-        run: terraform plan -out=tfplan -var-file=variables-${{ env.TFSTATE_PREFIX }}.tfvars
+        run: terraform plan -out=tfplan -var-file=variables-${{ env.TFSTATE_PREFIX }}.tfvars helm_release.istiod istio-system/istiod
         working-directory: ${{ env.TF_DIR }}
  
       - name: Terraform apply
