@@ -34,10 +34,6 @@ resource "helm_release" "istiod" {
   version = "1.21.2"
   reset_values = true
 
-  set {
-        name = "meshConfig.accessLogFile"
-        value = "/dev/stdout"
-    }
 }
 
 // installing istio gateway
@@ -55,7 +51,7 @@ resource "helm_release" "istio_gateway" {
 
   namespace = "istio-system"
 
-  version = "1.24.0"
+  version = "1.21.0"
 
   values = [file("istio_gateway_values.yaml")]
 }
