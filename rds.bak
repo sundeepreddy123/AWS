@@ -53,7 +53,7 @@ resource "aws_db_instance" "mysql" {
 
   username = "admin"
 
-  password = "Password12345!"
+  password = "Password12345"
 
 
   publicly_accessible = false
