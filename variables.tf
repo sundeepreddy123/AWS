@@ -20,6 +20,20 @@ variable "az_zones" {
   type        = list(string)
 }
 
+variable "ec2_ami_id" {
+  description = "AMI ID for the EC2 instances"
+  type        = string
+  default     = "ami-0e38835daf6b8a2b9" # Amazon Linux 2 AMI (HVM), SSD Volume Type
+}
+
+variable "ec2_instance_type" {
+  description = "EC2 instance type for the worker nodes"
+  type        = string
+  default     = "t3.micro"
+}
+
+
+
 # variable "cluster_name" {
 #   description = "EKS cluster name"
 #   type        = string
