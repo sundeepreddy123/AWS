@@ -11,7 +11,7 @@ output "private_subnets" {
 }
 
 output "az_zones" {
-  value = var.az_zones
+  value = aws_subnet.public[*].availability_zone
 }
 
 # output "cluster_name" {
