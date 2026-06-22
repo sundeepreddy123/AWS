@@ -71,6 +71,11 @@ resource "aws_instance" "linux_bastion" {
   key_name = aws_key_pair.bastion_key.key_name
 
 
+  vpc_security_group_ids = [
+    aws_security_group.bastion_sg.id
+  ]
+
+
   tags = {
 
     Name = "linux-bastion"

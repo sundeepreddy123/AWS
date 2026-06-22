@@ -36,8 +36,8 @@ resource "aws_security_group" "rds_sg" {
 }
 
 resource "aws_db_instance" "mysql" {
-
-
+  # RDS instances in a VPC must reference a DB subnet group, not a single subnet_id
+  db_subnet_group_name = aws_db_subnet_group.rds_subnet_group.name
   identifier = "private-mysql-db"
 
 
@@ -51,18 +51,14 @@ resource "aws_db_instance" "mysql" {
 
   allocated_storage = 20
 
-
   username = "admin"
 
   password = "Password12345!"
 
 
-  vpc_security_group_ids = [aws_security_group.bastion_sg]
-
-
   publicly_accessible = false
 
-
+  vpc_security_group_ids = [aws_security_group.rds_sg.id]
   skip_final_snapshot = true
 
 
@@ -70,5 +66,14 @@ resource "aws_db_instance" "mysql" {
 
     Name = "private-rds"
 
+  }
+}
+
+resource "aws_db_subnet_group" "rds_subnet_group" {
+  name       = "rds-private-subnet-group"
+  subnet_ids = aws_subnet.private[*].id
+
+  tags = {
+    Name = "rds-private-subnet-group"
   }
 }
