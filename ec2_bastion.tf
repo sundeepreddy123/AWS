@@ -1,22 +1,82 @@
-resource "tls_private_key" "bastion_key" {
-  algorithm = "RSA"
-  rsa_bits  = 4096
+# resource "tls_private_key" "bastion_key" {
+#   algorithm = "RSA"
+#   rsa_bits  = 4096
+# }
+
+
+# resource "aws_key_pair" "bastion_key" {
+#   key_name   = "linux-bastion-key"
+#   public_key = tls_private_key.bastion_key.public_key_openssh
+# }
+
+
+# resource "local_file" "bastion_pem" {
+
+#   content  = tls_private_key.bastion_key.private_key_pem
+
+#   filename = "linux-bastion-key.pem"
+
+#   file_permission = "0400"
+# }
+
+
+# IAM Role for Bastion EC2
+
+resource "aws_iam_role" "bastion_ssm_role" {
+
+  name = "bastion-ssm-role"
+
+
+  assume_role_policy = jsonencode({
+
+    Version = "2012-10-17"
+
+
+    Statement = [
+
+      {
+
+        Effect = "Allow"
+
+
+        Principal = {
+
+          Service = "ec2.amazonaws.com"
+
+        }
+
+
+        Action = "sts:AssumeRole"
+
+      }
+
+    ]
+
+  })
 }
 
 
-resource "aws_key_pair" "bastion_key" {
-  key_name   = "linux-bastion-key"
-  public_key = tls_private_key.bastion_key.public_key_openssh
+# Attach AWS managed SSM policy
+
+resource "aws_iam_role_policy_attachment" "bastion_ssm_policy" {
+
+  role = aws_iam_role.bastion_ssm_role.name
+
+
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+
 }
 
 
-resource "local_file" "bastion_pem" {
 
-  content  = tls_private_key.bastion_key.private_key_pem
+# Instance profile for EC2
 
-  filename = "linux-bastion-key.pem"
+resource "aws_iam_instance_profile" "bastion_instance_profile" {
 
-  file_permission = "0400"
+  name = "bastion-instance-profile"
+
+
+  role = aws_iam_role.bastion_ssm_role.name
 }
 
 resource "aws_security_group" "bastion_sg" {
@@ -68,7 +128,7 @@ resource "aws_instance" "linux_bastion" {
   associate_public_ip_address = true
 
 
-  key_name = aws_key_pair.bastion_key.key_name
+  iam_instance_profile = aws_iam_instance_profile.bastion_instance_profile.name
 
 
   vpc_security_group_ids = [
