@@ -7,7 +7,7 @@ resource "aws_security_group" "rds_sg" {
 
   ingress {
 
-    description = "mysql from bastion"
+    description = "myserver from bastion"
 
     from_port = 3306
 
@@ -35,15 +35,15 @@ resource "aws_security_group" "rds_sg" {
   }
 }
 
-resource "aws_db_instance" "mysql" {
+resource "aws_db_instance" "sqlserver" {
   # RDS instances in a VPC must reference a DB subnet group, not a single subnet_id
   db_subnet_group_name = aws_db_subnet_group.rds_subnet_group.name
-  identifier = "private-mysql-db"
+  identifier = "private-myserver-db"
 
 
-  engine = "mysql"
+  engine = "sqlserver-ex"
 
-  engine_version = "8.0"
+  engine_version = "15.00.4365.2.v1"
 
 
   instance_class = "db.t3.micro"
@@ -64,7 +64,7 @@ resource "aws_db_instance" "mysql" {
 
   tags = {
 
-    Name = "private-rds"
+    Name = "private-rds-sqlerver"
 
   }
 }
