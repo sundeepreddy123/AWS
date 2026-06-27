@@ -24,7 +24,7 @@ resource "aws_eks_cluster" "eks" {
 resource "aws_eks_node_group" "general" {
 
 
-  cluster_name = aws_eks_cluster.dev.name
+  cluster_name = aws_eks_cluster.eks
 
 
   node_group_name = "general"
@@ -35,10 +35,12 @@ resource "aws_eks_node_group" "general" {
 
   subnet_ids = data.aws_subnets.private.ids
 
+  capacity_type = "ON_DEMAND"
+
 
   scaling_config {
 
-    desired_size = 6
+    desired_size = 5
 
     max_size = 10
 
@@ -47,8 +49,6 @@ resource "aws_eks_node_group" "general" {
   }
 
 
-  instance_types = [
-    "t3.micro"
-  ]
+  instance_types = [ var.ec2_instance_type ]
 
 }

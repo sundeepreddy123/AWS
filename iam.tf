@@ -78,6 +78,37 @@ resource "aws_iam_role_policy_attachment" "ecr" {
 
 }
 
+// cluster role for eks_cluster_autoscaler
+# resource "aws_iam_policy" "cluster_autoscaler" {
+
+#   name = "${var.eks_cluster_name}-cluster-autoscaler"
+
+#   policy = jsonencode({
+
+#     Version = "2012-10-17"
+
+#     Statement = [
+
+#       {
+#         Effect = "Allow"
+
+#         Action = [
+#           "autoscaling:DescribeAutoScalingGroups",
+#           "autoscaling:DescribeAutoScalingInstances",
+#           "autoscaling:DescribeLaunchConfigurations",
+#           "autoscaling:DescribeScalingActivities",
+#           "autoscaling:DescribeTags",
+#           "autoscaling:SetDesiredCapacity",
+#           "autoscaling:TerminateInstanceInAutoScalingGroup",
+#           "ec2:DescribeLaunchTemplateVersions"
+#         ]
+
+#         Resource = "*"
+#       }
+#     ]
+#   })
+# }
+
 # // IAM Role for IRSA (Trust relationship)
 # resource "aws_iam_role" "aws_load_balancer_controller" {
 
