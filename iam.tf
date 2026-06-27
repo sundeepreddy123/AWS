@@ -131,7 +131,7 @@ resource "aws_eks_pod_identity_association" "cluster_autoscaler" {
 
   namespace = "kube-system"
 
-  service_account = kubernetes_service_account.cluster_autoscaler.metadata[0].name
+  service_account = kubernetes_service_account_v1.cluster_autoscaler.metadata[0].name
 
   role_arn = aws_iam_role.cluster_autoscaler.arn
 }
