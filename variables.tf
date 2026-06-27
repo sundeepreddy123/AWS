@@ -34,12 +34,12 @@ variable "ec2_instance_type" {
 
 
 
-# variable "cluster_name" {
-#   description = "EKS cluster name"
-#   type        = string
-# }
+variable "eks_cluster_name" {
+  description = "EKS cluster name"
+  type        = string
+}
 
-# variable "cluster_version" {
-#   description = "EKS cluster version"
-#   type        = string
-# }
+variable "eks_version" {
+  description = "EKS cluster version"
+  type        = string
+}

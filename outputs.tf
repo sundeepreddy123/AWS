@@ -10,17 +10,13 @@ output "private_subnets" {
   value = aws_subnet.private[*].id
 }
 
-output "az_zones" {
-  value = aws_subnet.public[*].availability_zone
+output "eks_cluster_name" {
+  value = aws_eks_cluster.eks.name
 }
 
-# output "cluster_name" {
-#   value = aws_eks_cluster.dev.name
-# }
-
-# output "cluster_endpoint" {
-#   value = aws_eks_cluster.dev.endpoint
-# }
+output "cluster_endpoint" {
+  value = aws_eks_cluster.eks.endpoint
+}
 
 # output "cluster_security_group_id" {
 #   value = aws_eks_cluster.dev.vpc_config[0].cluster_security_group_id

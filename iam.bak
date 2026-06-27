@@ -1,7 +1,7 @@
 // eks_cluster-role
-resource "aws_iam_role" "eks_cluster" {
+resource "aws_iam_role" "eks" {
 
-  name = "${var.cluster_name}-cluster-role"
+  name = "${var.eks_cluster_name}-eks-cluster"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -20,9 +20,9 @@ resource "aws_iam_role" "eks_cluster" {
   })
 }
 // policy attachment for eks_cluster role
-resource "aws_iam_role_policy_attachment" "eks_cluster" {
+resource "aws_iam_role_policy_attachment" "eks" {
 
-  role = aws_iam_role.eks_cluster.name
+  role = aws_iam_role.eks.name
 
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
 }
@@ -31,7 +31,7 @@ resource "aws_iam_role_policy_attachment" "eks_cluster" {
 
 resource "aws_iam_role" "node" {
 
-  name = "${var.cluster_name}-node-role"
+  name = "${var.eks_cluster_name}-node-role"
 
   assume_role_policy = jsonencode({
 
