@@ -66,33 +66,32 @@ resource "helm_release" "cluster_autoscaler" {
 
   version = "9.46.6"
 
-  set = {
+  set = [{
 
     name = "autoDiscovery.clusterName"
 
     value = aws_eks_cluster.eks.name
-  }
-
-  set = {
+  },
+  {
 
     name = "awsRegion"
 
     value = var.aws_region
-  }
+  },
 
-  set = {
+  {
 
     name = "rbac.serviceAccount.create"
 
     value = "false"
-  }
+  },
 
-  set = {
+  {
 
     name = "rbac.serviceAccount.name"
 
     value = kubernetes_service_account_v1.cluster_autoscaler.metadata[0].name
-  }
+  }]
 
   depends_on = [
 
