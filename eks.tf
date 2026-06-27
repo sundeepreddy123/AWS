@@ -16,7 +16,7 @@ resource "aws_eks_cluster" "eks" {
   }
 
   depends_on = [
-    aws_iam_role_policy_attachment.eks_cluster // EKS cluster will be created only after the IAM role is attached to the policy 
+    aws_iam_role_policy_attachment.eks // EKS cluster will be created only after the IAM role is attached to the policy 
   ]
 }
 
