@@ -66,28 +66,28 @@ resource "helm_release" "cluster_autoscaler" {
 
   version = "9.46.6"
 
-  set {
+  set = {
 
     name = "autoDiscovery.clusterName"
 
     value = aws_eks_cluster.eks.name
   }
 
-  set {
+  set = {
 
     name = "awsRegion"
 
     value = var.aws_region
   }
 
-  set {
+  set = {
 
     name = "rbac.serviceAccount.create"
 
     value = "false"
   }
 
-  set {
+  set = {
 
     name = "rbac.serviceAccount.name"
 
