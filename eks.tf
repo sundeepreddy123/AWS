@@ -52,3 +52,53 @@ resource "aws_eks_node_group" "general" {
   instance_types = [ var.ec2_instance_type ]
 
 }
+
+
+resource "helm_release" "cluster_autoscaler" {
+
+  name = "cluster-autoscaler"
+
+  repository = "https://kubernetes.github.io/autoscaler"
+
+  chart = "cluster-autoscaler"
+
+  namespace = "kube-system"
+
+  version = "9.46.6"
+
+  set {
+
+    name = "autoDiscovery.clusterName"
+
+    value = aws_eks_cluster.eks.name
+  }
+
+  set {
+
+    name = "awsRegion"
+
+    value = var.aws_region
+  }
+
+  set {
+
+    name = "rbac.serviceAccount.create"
+
+    value = "false"
+  }
+
+  set {
+
+    name = "rbac.serviceAccount.name"
+
+    value = kubernetes_service_account.cluster_autoscaler.metadata[0].name
+  }
+
+  depends_on = [
+
+    helm_release.metrics_server,
+
+    aws_eks_pod_identity_association.cluster_autoscaler
+
+  ]
+}
