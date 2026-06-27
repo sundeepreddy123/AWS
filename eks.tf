@@ -91,7 +91,7 @@ resource "helm_release" "cluster_autoscaler" {
 
     name = "rbac.serviceAccount.name"
 
-    value = kubernetes_service_account.cluster_autoscaler.metadata[0].name
+    value = kubernetes_service_account_v1.cluster_autoscaler.metadata[0].name
   }
 
   depends_on = [
