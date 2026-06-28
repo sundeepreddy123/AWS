@@ -166,7 +166,23 @@ resource "aws_eks_pod_identity_association" "cluster_autoscaler" {
 #   })
 # }
 
-# // IAM Policy for AWS Load Balancer Controller permissions
+# data "aws_iam_policy_document" "aws_lbc" {
+#   statement {
+#     effect = "Allow"
+
+#     principals {
+#       type        = "Service"
+#       identifiers = ["pods.eks.amazonaws.com"]
+#     }
+
+#     actions = [
+#       "sts:AssumeRole",
+#       "sts:TagSession"
+#     ]
+#   }
+# }
+
+// IAM Policy for AWS Load Balancer Controller permissions
 # resource "aws_iam_policy" "lb_controller_policy" {
 
 #   name = "AWSLoadBalancerControllerIAMPolicy"
