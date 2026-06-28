@@ -1,14 +1,14 @@
-resource "helm_release" "metrics_server" {
+# resource "helm_release" "metrics_server" {
 
-  name = "metrics-server"
+#   name = "metrics-server"
 
-  repository = "https://kubernetes-sigs.github.io/metrics-server"
+#   repository = "https://kubernetes-sigs.github.io/metrics-server"
 
-  chart = "metrics-server"
+#   chart = "metrics-server"
 
-  namespace = "kube-system"
+#   namespace = "kube-system"
 
-  create_namespace = false
+#   create_namespace = false
 
-  version = "3.13.0"
-}
+#   version = "3.13.0"
+# }
