@@ -40,9 +40,9 @@ resource "aws_eks_node_group" "general" {
 
   scaling_config {
 
-    desired_size = 30
+    desired_size = 15
 
-    max_size = 50
+    max_size = 10
 
     min_size = 1
 
@@ -53,6 +53,10 @@ resource "aws_eks_node_group" "general" {
 
 }
 
+resource "aws_eks_addon" "pod_identity" {
+  cluster_name = aws_eks_cluster.eks.name
+  addon_name   = "eks-pod-identity-agent"
+}
 
 resource "helm_release" "cluster_autoscaler" {
 
