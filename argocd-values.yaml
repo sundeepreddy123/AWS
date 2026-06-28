@@ -1,6 +1,6 @@
-server:
-  service:
-    type: LoadBalancer
+# server:
+#   service:
+#     type: LoadBalancer
 
 configs:
   params:
