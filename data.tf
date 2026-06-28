@@ -15,38 +15,38 @@ data "aws_subnets" "private" {
   }
 }
 
-data "aws_eks_cluster" "eks" {
-  name = aws_eks_cluster.eks.name
-}
+# data "aws_eks_cluster" "eks" {
+#   name = aws_eks_cluster.eks.name
+# }
 
-data "aws_eks_cluster_auth" "eks" {
-  name = aws_eks_cluster.eks.name
-}
+# data "aws_eks_cluster_auth" "eks" {
+#   name = aws_eks_cluster.eks.name
+# }
 
-data "aws_iam_policy_document" "cluster_autoscaler_assume" {
+# data "aws_iam_policy_document" "cluster_autoscaler_assume" {
 
-  statement {
+#   statement {
 
-    effect = "Allow"
+#     effect = "Allow"
 
-    principals {
+#     principals {
 
-      type = "Service"
+#       type = "Service"
 
-      identifiers = [
-        "pods.eks.amazonaws.com"
-      ]
-    }
+#       identifiers = [
+#         "pods.eks.amazonaws.com"
+#       ]
+#     }
 
-    actions = [
+#     actions = [
 
-      "sts:AssumeRole",
+#       "sts:AssumeRole",
 
-      "sts:TagSession"
+#       "sts:TagSession"
 
-    ]
-  }
-}
+#     ]
+#   }
+# }
 
 # data "tls_certificate" "eks" {
 #   url = aws_eks_cluster.dev.identity[0].oidc[0].issuer
