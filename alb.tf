@@ -66,10 +66,8 @@ resource "helm_release" "aws_lbc" {
       }, {
       name  = "resources.limits.memory"
       value = "128Mi"
-      }, {
-      name  = "vpcId"
-      value = data.terraform_remote_state.vpc.outputs.vpc_id
-  }]
+      }
+  ]
 
   depends_on = [aws_eks_node_group.general]
 }
