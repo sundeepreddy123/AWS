@@ -42,7 +42,7 @@ resource "aws_eks_node_group" "general" {
 
     desired_size = 15
 
-    max_size = 10
+    max_size = 5
 
     min_size = 1
 
