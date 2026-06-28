@@ -78,63 +78,63 @@ resource "aws_iam_role_policy_attachment" "ecr" {
 
 }
 
-// cluster role for eks_cluster_autoscaler
-resource "aws_iam_policy" "cluster_autoscaler" {
+# // cluster role for eks_cluster_autoscaler
+# resource "aws_iam_policy" "cluster_autoscaler" {
 
-  name = "${var.eks_cluster_name}-cluster-autoscaler"
+#   name = "${var.eks_cluster_name}-cluster-autoscaler"
 
-  policy = jsonencode({
+#   policy = jsonencode({
 
-    Version = "2012-10-17"
+#     Version = "2012-10-17"
 
-    Statement = [
+#     Statement = [
 
-      {
-        Effect = "Allow"
+#       {
+#         Effect = "Allow"
 
-        Action = [
-          "autoscaling:DescribeAutoScalingGroups",
-          "autoscaling:DescribeAutoScalingInstances",
-          "autoscaling:DescribeLaunchConfigurations",
-          "autoscaling:DescribeScalingActivities",
-          "autoscaling:DescribeTags",
-          "autoscaling:SetDesiredCapacity",
-          "autoscaling:TerminateInstanceInAutoScalingGroup",
-          "ec2:DescribeLaunchTemplateVersions"
-        ]
+#         Action = [
+#           "autoscaling:DescribeAutoScalingGroups",
+#           "autoscaling:DescribeAutoScalingInstances",
+#           "autoscaling:DescribeLaunchConfigurations",
+#           "autoscaling:DescribeScalingActivities",
+#           "autoscaling:DescribeTags",
+#           "autoscaling:SetDesiredCapacity",
+#           "autoscaling:TerminateInstanceInAutoScalingGroup",
+#           "ec2:DescribeLaunchTemplateVersions"
+#         ]
 
-        Resource = "*"
-      }
-    ]
-  })
-}
+#         Resource = "*"
+#       }
+#     ]
+#   })
+# }
 
 
-resource "aws_iam_role" "cluster_autoscaler" {
+# resource "aws_iam_role" "cluster_autoscaler" {
 
-  name = "${var.eks_cluster_name}-cluster-autoscaler"
+#   name = "${var.eks_cluster_name}-cluster-autoscaler"
 
-  assume_role_policy = data.aws_iam_policy_document.cluster_autoscaler_assume.json
-}
+#   assume_role_policy = data.aws_iam_policy_document.cluster_autoscaler_assume.json
+# }
 
-/// attched policy
-resource "aws_iam_role_policy_attachment" "cluster_autoscaler" {
+# /// attched policy
+# resource "aws_iam_role_policy_attachment" "cluster_autoscaler" {
 
-  role = aws_iam_role.cluster_autoscaler.name
+#   role = aws_iam_role.cluster_autoscaler.name
 
-  policy_arn = aws_iam_policy.cluster_autoscaler.arn
-}
-//// This is where Pod Identity connects the Kubernetes ServiceAccount to the IAM role.
-resource "aws_eks_pod_identity_association" "cluster_autoscaler" {
+#   policy_arn = aws_iam_policy.cluster_autoscaler.arn
+# }
+# //// This is where Pod Identity connects the Kubernetes ServiceAccount to the IAM role.
+# resource "aws_eks_pod_identity_association" "cluster_autoscaler" {
 
-  cluster_name = aws_eks_cluster.eks.name
+#   cluster_name = aws_eks_cluster.eks.name
 
-  namespace = "kube-system"
+#   namespace = "kube-system"
 
-  service_account = kubernetes_service_account_v1.cluster_autoscaler.metadata[0].name
+#   service_account = kubernetes_service_account_v1.cluster_autoscaler.metadata[0].name
 
-  role_arn = aws_iam_role.cluster_autoscaler.arn
-}
+#   role_arn = aws_iam_role.cluster_autoscaler.arn
+# }
 
 # // IAM Role for IRSA (Trust relationship)
 # resource "aws_iam_role" "aws_load_balancer_controller" {
