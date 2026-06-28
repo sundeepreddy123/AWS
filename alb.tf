@@ -66,8 +66,10 @@ resource "helm_release" "aws_lbc" {
       }, {
       name  = "resources.limits.memory"
       value = "128Mi"
-      }
-  ]
+      }, {
+      name  = "vpcId"
+      value = "aws_vpc.main.id"
+  }]
 
   depends_on = [aws_eks_node_group.general]
 }
