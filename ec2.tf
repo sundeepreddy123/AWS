@@ -48,7 +48,7 @@ resource "aws_iam_instance_profile" "profile" {
 resource "aws_security_group" "ec2" {
   name        = "ec2-ssm-sg"
   description = "Security group for EC2 managed through SSM"
-  vpc_id      = aws_vpc.main
+  vpc_id      = aws_vpc.main.id
 
   egress {
     from_port   = 0
