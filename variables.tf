@@ -43,3 +43,8 @@ variable "eks_version" {
   description = "EKS cluster version"
   type        = string
 }
+
+variable "email" {
+    description = "email for sns"
+    type = string  
+}
