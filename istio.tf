@@ -15,7 +15,11 @@ resource "helm_release" "istio_base" {
   reset_values = true
 
   version = "1.21.2"
+
+  depends_on = [ ]
 }
+
+
 // creates pods
 resource "helm_release" "istiod" {
 
@@ -39,21 +43,44 @@ resource "helm_release" "istiod" {
 }
 
 // installing istio gateway
-resource "helm_release" "istio_gateway" {
+resource "helm_release" "istio_ingress" {
 
   depends_on = [
     helm_release.istiod
   ]
 
-  name = "istio-ingressgateway"
+  name = "istio-ingress"
 
   repository = "https://istio-release.storage.googleapis.com/charts"
 
   chart = "gateway"
 
-  namespace = "istio-system"
+  namespace = "istio-ingress"
 
-  version = "1.21.0"
+  version = "1.21.2"
+  wait = true
+  reset_values = true
 
-  values = [file("istio_gateway_values.yaml")]
+  values = [file("istio/values-${var.env}.yaml")]
+}
+
+resource "helm_release" "istio_ingress-internal" {
+
+  depends_on = [
+    helm_release.istiod
+  ]
+
+  name = "istio-ingress-internal"
+
+  repository = "https://istio-release.storage.googleapis.com/charts"
+
+  chart = "gateway"
+
+  namespace = "istio-ingress-internal"
+
+  version = "1.21.2"
+  wait = true
+  reset_values = true
+
+  values = [file("istio/values-${var.env}-int.yaml")]
 }

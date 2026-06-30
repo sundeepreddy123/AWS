@@ -1,0 +1,39 @@
+applications:
+
+  - name: public-app
+
+    image: nginx
+
+    tag: latest
+
+    replicas: 1
+
+    servicePort: 80
+
+    path: /public
+
+    html: |
+      <h1>Public Application</h1>
+
+  - name: private-app
+
+    image: nginx
+
+    tag: latest
+
+    replicas: 1
+
+    servicePort: 80
+
+    path: /private
+
+    html: |
+      <h1>Private Application</h1>
+
+ingress:
+
+  certificateArn: arn:aws:acm:REGION:ACCOUNT:certificate/xxxxxxxx
+
+gateway:
+
+  name: external-gateway
