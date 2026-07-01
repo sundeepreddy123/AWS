@@ -23,7 +23,6 @@ spec:
     - uri:
         prefix: /
 
-
     route:
 
     - destination:

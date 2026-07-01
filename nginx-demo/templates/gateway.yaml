@@ -25,3 +25,19 @@ spec:
     hosts:
 
     - "*"
+
+  - port:
+
+      number: 443
+
+      name: https
+
+      protocol: HTTPS
+
+    tls:
+      mode: SIMPLE
+      credentialName: istio-ingressgateway-certs
+
+    hosts:
+
+    - "*"

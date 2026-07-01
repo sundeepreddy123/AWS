@@ -30,10 +30,6 @@ applications:
     html: |
       <h1>Private Application</h1>
 
-ingress:
-
-  certificateArn: arn:aws:acm:REGION:ACCOUNT:certificate/xxxxxxxx
-
 gateway:
 
   name: external-gateway
