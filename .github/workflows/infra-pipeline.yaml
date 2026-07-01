@@ -39,7 +39,7 @@ jobs:
             -backend-config="region=${{ secrets.AWS_REGION }}"
           # terraform import -input=false -var-file=variables-${{ env.TFSTATE_PREFIX }}.tfvars helm_release.aws_lbc kube-system/aws-load-balancer-controller || true
           # terraform import -input=false -var-file=variables-${{ env.TFSTATE_PREFIX }}.tfvars helm_release.metrics_server kube-system/metrics-server || true
-          terraform import -input=false -var-file=variables-${{ env.TFSTATE_PREFIX }}.tfvars helm_release.cluster_autoscaler kube-system/cluster-autoscaler || true
+          # terraform import -input=false -var-file=variables-${{ env.TFSTATE_PREFIX }}.tfvars helm_release.cluster_autoscaler kube-system/cluster-autoscaler || true
         working-directory: ${{ env.TF_DIR }}
 
       - name: Terraform validate
