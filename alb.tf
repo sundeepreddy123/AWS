@@ -76,5 +76,5 @@ resource "helm_release" "aws_lbc" {
       value = "aws_vpc.main.id"
   }]
 
-  depends_on = [aws_eks_node_group.general]
+  # depends_on = [aws_eks_node_group.general]
 }
