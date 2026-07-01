@@ -54,50 +54,50 @@ resource "aws_eks_node_group" "general" {
 }
 
 
-# resource "helm_release" "cluster_autoscaler" {
+resource "helm_release" "cluster_autoscaler" {
 
-#   name = "cluster-autoscaler"
+  name = "cluster-autoscaler"
 
-#   repository = "https://kubernetes.github.io/autoscaler"
+  repository = "https://kubernetes.github.io/autoscaler"
 
-#   chart = "cluster-autoscaler"
+  chart = "cluster-autoscaler"
 
-#   namespace = "kube-system"
+  namespace = "kube-system"
 
-#   version = "9.46.6"
+  version = "9.46.6"
 
-#   set = [{
+  set = [{
 
-#     name = "autoDiscovery.clusterName"
+    name = "autoDiscovery.clusterName"
 
-#     value = aws_eks_cluster.eks.name
-#   },
-#   {
+    value = aws_eks_cluster.eks.name
+  },
+  {
 
-#     name = "awsRegion"
+    name = "awsRegion"
 
-#     value = var.aws_region
-#   },
+    value = var.aws_region
+  },
 
-#   {
+  {
 
-#     name = "rbac.serviceAccount.create"
+    name = "rbac.serviceAccount.create"
 
-#     value = "false"
-#   },
+    value = "false"
+  },
 
-#   {
+  {
 
-#     name = "rbac.serviceAccount.name"
+    name = "rbac.serviceAccount.name"
 
-#     value = kubernetes_service_account_v1.cluster_autoscaler.metadata[0].name
-#   }]
+    value = kubernetes_service_account_v1.cluster_autoscaler.metadata[0].name
+  }]
 
-#   depends_on = [
+  depends_on = [
 
-#     helm_release.metrics_server,
+    helm_release.metrics_server,
 
-#     aws_eks_pod_identity_association.cluster_autoscaler
+    aws_eks_pod_identity_association.cluster_autoscaler
 
-#   ]
-# }
+  ]
+}

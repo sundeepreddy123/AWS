@@ -41,40 +41,40 @@ resource "aws_eks_addon" "pod_identity" {
   addon_name   = "eks-pod-identity-agent"
 }
 
-# resource "helm_release" "aws_lbc" {
-#   name = "aws-load-balancer-controller"
+resource "helm_release" "aws_lbc" {
+  name = "aws-load-balancer-controller"
 
-#   repository = "https://aws.github.io/eks-charts"
-#   chart      = "aws-load-balancer-controller"
-#   namespace  = "kube-system"
-#   version    = "1.13.4"
+  repository = "https://aws.github.io/eks-charts"
+  chart      = "aws-load-balancer-controller"
+  namespace  = "kube-system"
+  version    = "1.13.4"
 
-#   set = [
-#     {
-#       name  = "clusterName"
-#       value = aws_eks_cluster.eks.name
-#       }, {
-#       name  = "serviceAccount.name"
-#       value = "aws-load-balancer-controller"
-#       }, {
-#       name  = "replicaCount"
-#       value = 1
-#       }, {
-#       name  = "resources.requests.cpu"
-#       value = "100m"
-#       }, {
-#       name  = "resources.requests.memory"
-#       value = "128Mi"
-#       }, {
-#       name  = "resources.limits.cpu"
-#       value = "100m"
-#       }, {
-#       name  = "resources.limits.memory"
-#       value = "128Mi"
-#       }, {
-#       name  = "vpcId"
-#       value = "aws_vpc.main.id"
-#   }]
+  set = [
+    {
+      name  = "clusterName"
+      value = aws_eks_cluster.eks.name
+      }, {
+      name  = "serviceAccount.name"
+      value = "aws-load-balancer-controller"
+      }, {
+      name  = "replicaCount"
+      value = 1
+      }, {
+      name  = "resources.requests.cpu"
+      value = "100m"
+      }, {
+      name  = "resources.requests.memory"
+      value = "128Mi"
+      }, {
+      name  = "resources.limits.cpu"
+      value = "100m"
+      }, {
+      name  = "resources.limits.memory"
+      value = "128Mi"
+      }, {
+      name  = "vpcId"
+      value = "aws_vpc.main.id"
+  }]
 
-#   depends_on = [aws_eks_node_group.general]
-# }
+  depends_on = [aws_eks_node_group.general]
+}
