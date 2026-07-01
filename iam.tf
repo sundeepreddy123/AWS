@@ -27,56 +27,56 @@ resource "aws_iam_role_policy_attachment" "eks" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
 }
 
-/// Node group role for eks cluster
+# /// Node group role for eks cluster
 
-# resource "aws_iam_role" "node" {
+ resource "aws_iam_role" "node" {
 
-#   name = "${var.eks_cluster_name}-node-role"
+   name = "${var.eks_cluster_name}-node-role"
 
-#   assume_role_policy = jsonencode({
+   assume_role_policy = jsonencode({
 
-#     Version = "2012-10-17"
+    Version = "2012-10-17"
 
-#     Statement = [
-#       {
-#         Effect = "Allow"
+    Statement = [
+       {
+         Effect = "Allow"
 
-#         Principal = {
-#           Service = "ec2.amazonaws.com"
-#         }
+         Principal = {
+           Service = "ec2.amazonaws.com"
+         }
 
-#         Action = "sts:AssumeRole"
-#       }
-#     ]
+         Action = "sts:AssumeRole"
+       }
+     ]
 
-#   })
-# }
+   })
+ }
 
-# resource "aws_iam_role_policy_attachment" "worker" {
+ resource "aws_iam_role_policy_attachment" "worker" {
 
-#   role = aws_iam_role.node.name
+  role = aws_iam_role.node.name
 
-#   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
 
-# }
+}
 
 
-# resource "aws_iam_role_policy_attachment" "cni" {
+resource "aws_iam_role_policy_attachment" "cni" {
 
-#   role = aws_iam_role.node.name
+  role = aws_iam_role.node.name
 
-#   policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
 
-# }
+}
 
-# // policy
-# resource "aws_iam_role_policy_attachment" "ecr" {
+// policy
+resource "aws_iam_role_policy_attachment" "ecr" {
 
-#   role = aws_iam_role.node.name
+  role = aws_iam_role.node.name
 
-#   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
 
-# }
+}
 
 # // cluster role for eks_cluster_autoscaler
 # resource "aws_iam_policy" "cluster_autoscaler" {
