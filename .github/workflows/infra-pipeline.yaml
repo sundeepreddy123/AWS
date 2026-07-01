@@ -40,9 +40,10 @@ jobs:
           # terraform import -input=false -var-file=variables-${{ env.TFSTATE_PREFIX }}.tfvars helm_release.aws_lbc kube-system/aws-load-balancer-controller || true
           # terraform import -input=false -var-file=variables-${{ env.TFSTATE_PREFIX }}.tfvars helm_release.metrics_server kube-system/metrics-server || true
           # terraform import -input=false -var-file=variables-${{ env.TFSTATE_PREFIX }}.tfvars helm_release.cluster_autoscaler kube-system/cluster-autoscaler || true
-          # terraform import -input=false -var-file=variables-${{ env.TFSTATE_PREFIX }}.tfvars helm_release.istiod istio-system/istiod || true
-          # terraform import -input=false -var-file=variables-${{ env.TFSTATE_PREFIX }}.tfvars helm_release.istio_ingress istio-ingress/istio-ingress || true
-          # terraform import -input=false -var-file=variables-${{ env.TFSTATE_PREFIX }}.tfvars helm_release.istio_ingress-internal istio-ingress-internal/istio-ingress-internal || true
+          terraform import -input=false -var-file=variables-${{ env.TFSTATE_PREFIX }}.tfvars helm_release.istio_base istio-system/istio-base || true
+          terraform import -input=false -var-file=variables-${{ env.TFSTATE_PREFIX }}.tfvars helm_release.istiod istio-system/istiod || true
+          terraform import -input=false -var-file=variables-${{ env.TFSTATE_PREFIX }}.tfvars helm_release.istio_ingress istio-ingress/istio-ingress || true
+          terraform import -input=false -var-file=variables-${{ env.TFSTATE_PREFIX }}.tfvars helm_release.istio_ingress-internal istio-ingress-internal/istio-ingress-internal || true
         working-directory: ${{ env.TF_DIR }}
 
       - name: Terraform validate
