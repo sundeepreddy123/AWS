@@ -56,7 +56,7 @@ resource "helm_release" "istio_ingress" {
 
   namespace = "istio-ingress"
   create_namespace = true
-  timeout = 900
+  timeout = 1200
 
   version = "1.30.0"
   wait = true
@@ -79,7 +79,7 @@ resource "helm_release" "istio_ingress-internal" {
 
   namespace = "istio-ingress-internal"
   create_namespace = true
-  timeout = 900
+  timeout = 1200
 
   version = "1.30.0"
   wait = true
