@@ -16,7 +16,6 @@ resource "helm_release" "istio_base" {
 
   version = "1.21.2"
 
-  depends_on = [ ]
 }
 
 
