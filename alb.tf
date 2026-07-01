@@ -36,6 +36,11 @@ resource "aws_eks_pod_identity_association" "aws_lbc" {
   role_arn        = aws_iam_role.aws_lbc.arn
 }
 
+resource "aws_eks_addon" "pod_identity" {
+  cluster_name = aws_eks_cluster.eks.name
+  addon_name   = "eks-pod-identity-agent"
+}
+
 resource "helm_release" "aws_lbc" {
   name = "aws-load-balancer-controller"
 
