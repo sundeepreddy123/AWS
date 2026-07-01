@@ -1,7 +1,8 @@
 service:
+  type: LoadBalancer
   annotations:
-    alb.ingress.kubernetes.io/scheme: "internal"
-    alb.ingress.kubernetes.io/backend-protocol: "tcp"
-    alb.ingress.kubernetes.io/connection-idle-timeout: "3600"
-    alb.ingress.kubernetes.io/ssl-cert: "arn:aws:acm:ap-south-1:729859598223:certificate/c0bfa19b-6edb-4f34-819b-dff163225ee4"
-    alb.ingress.kubernetes.io/ssl-ports: "443"
+    service.beta.kubernetes.io/aws-load-balancer-scheme: "internal-facing"
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: "tcp"
+    service.beta.kubernetes.io/aws-load-balancer-connection-idle-timeout: "3600"
+    service.beta.kubernetes.io/aws-load-balancer-ssl-cert: "arn:aws:acm:ap-south-1:729859598223:certificate/c0bfa19b-6edb-4f34-819b-dff163225ee4"
+    service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "443"
