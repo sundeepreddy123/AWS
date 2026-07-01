@@ -21,37 +21,37 @@ resource "aws_eks_cluster" "eks" {
 }
 
 
-# resource "aws_eks_node_group" "general" {
+resource "aws_eks_node_group" "general" {
 
 
-#   cluster_name = aws_eks_cluster.eks.name
+  cluster_name = aws_eks_cluster.eks.name
 
 
-#   node_group_name = "general"
+  node_group_name = "general"
 
 
-#   node_role_arn = aws_iam_role.node.arn
+  node_role_arn = aws_iam_role.node.arn
 
 
-#   subnet_ids = data.aws_subnets.private.ids
+  subnet_ids = data.aws_subnets.private.ids
 
-#   capacity_type = "ON_DEMAND"
-
-
-#   scaling_config {
-
-#     desired_size = 9
-
-#     max_size = 10
-
-#     min_size = 3
-
-#   }
+  capacity_type = "ON_DEMAND"
 
 
-#   instance_types = [ var.ec2_instance_type ]
+  scaling_config {
 
-# }
+    desired_size = 9
+
+    max_size = 10
+
+    min_size = 3
+
+  }
+
+
+  instance_types = [ var.ec2_instance_type ]
+
+}
 
 
 resource "helm_release" "cluster_autoscaler" {
