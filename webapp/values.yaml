@@ -1,0 +1,19 @@
+replicaCount: 2
+
+image:
+  repository: nginx
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  port: 80
+
+gateway:
+  enabled: true
+
+  host: nginx.demo.local
+
+  gatewaySelector: istio-ingress
+
+virtualService:
+  enabled: true

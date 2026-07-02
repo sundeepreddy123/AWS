@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+
+metadata:
+  name: private-app
+
+data:
+  index.html: |
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Istio Test</title>
+    </head>
+    <body>
+      <h1>🎉 Istio + NLB is Working!</h1>
+      <h2>Hello Sundeep</h2>
+      <p>This page is coming from a ConfigMap mounted into the Nginx container.</p>
+    </body>
+    </html>
