@@ -36,6 +36,35 @@ resource "aws_iam_role_policy_attachment" "ssm" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 
 }
+// cloudwatch agent
+resource "aws_iam_role_policy_attachment" "cloudwatch" {
+  role       = aws_iam_role.ec2_role.name
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
+}
+// SSM parametre store access
+resource "aws_ssm_parameter" "cloudwatch_config" {
+  name  = "/cloudwatch/agent/config"
+  type  = "String"
+
+  value = file("amazon-cloudwatch-agent.json")
+}
+
+resource "aws_ssm_association" "cloudwatch" {
+  name = "AmazonCloudWatch-ManageAgent"
+
+  targets {
+    key    = "InstanceIds"
+    values = [aws_instance.ec2.id]
+  }
+
+  parameters = {
+    action                        = "configure"
+    mode                          = "ec2"
+    optionalConfigurationSource   = "ssm"
+    optionalConfigurationLocation = aws_ssm_parameter.cloudwatch_config.name
+    optionalRestart               = "yes"
+  }
+}
 
 resource "aws_iam_instance_profile" "profile" {
 
