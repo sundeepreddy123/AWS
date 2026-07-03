@@ -1,0 +1,58 @@
+name: build and push Docker Image
+
+on:
+ push:
+   branches:
+      - main
+
+permissions:
+    contents: read
+
+env:
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+  AWS_ACCOUNT_id: ${{ secrets.AWS_ACCOUNT_ID }}
+  ECR_REPOSITORY: webapp
+
+jobs:
+    build:
+
+        runs-on: ubuntu-latest
+
+        outputs:
+            image_tag: ${{ steps.vars.outputs.tag }}
+
+        steps:
+
+            - name: Checkout source
+              uses: actions/checkout@v4
+            
+            - name: Configure AWS Credentials
+              uses: aws-actions/configure-aws-credentials@v4
+              with:
+                aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                aws-secret-access-key: ${{  secrets.AWS_SECRET_ACCESS_KEY }}
+                aws-region: ${{ env.AWS_REGION }}
+            - name: Login to Amazon ECR
+              id: login-ecr
+              uses: aws-actions/amazon-ecr-login@v2
+
+            - name: Generate Image Tag
+              id: vars
+              run: |
+               echo "tag=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
+
+            - name: Build Docker Image
+              run: |
+               docker build \
+                -t $ECR_REPOSITORY:${{ steps.vars.outputs.tag }} .
+
+            - name: Tag Image
+              run: |
+                docker tag \
+                  $ECR_REPOSITORY:${{ steps.vars.outputs.tag }} \
+                  $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:${{ steps.vars.outputs.tag }}
+
+            - name: Push Image
+              run: |
+                docker push \
+                  $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:${{ steps.vars.outputs.tag }}
