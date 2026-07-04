@@ -346,7 +346,7 @@ data "aws_iam_policy_document" "alb_assume_role" {
       type = "Federated"
 
       identifiers = [
-        aws_iam_openid_connect_provider.this.arn
+        aws_iam_openid_connect_provider.eks.arn
       ]
     }
 
@@ -355,7 +355,7 @@ data "aws_iam_policy_document" "alb_assume_role" {
       test = "StringEquals"
 
       variable = "${replace(
-        aws_iam_openid_connect_provider.this.url,
+        aws_iam_openid_connect_provider.eks.url,
         "https://",
         ""
       )}:sub"
