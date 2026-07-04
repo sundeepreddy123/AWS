@@ -21,280 +21,313 @@ resource "aws_eks_cluster" "eks" {
 }
 
 
-resource "aws_eks_fargate_profile" "fargate" {
+resource "aws_eks_node_group" "node_group" {
+
 
   cluster_name = aws_eks_cluster.eks.name
 
-  fargate_profile_name = "kube-system"
 
-  pod_execution_role_arn = aws_iam_role.fargate.arn
+  node_group_name = "eks-node-groups"
 
-  subnet_ids = aws_subnet.private[*].id
 
-  selector {
-    namespace = "kube-system"
+  node_role_arn = aws_iam_role.node.arn
+
+
+  subnet_ids = aws_subnets.private[*].ids
+
+  capacity_type = "ON_DEMAND"
+
+
+  scaling_config {
+
+    desired_size = 9
+
+    max_size = 10
+
+    min_size = 3
+
   }
 
-  depends_on = [
-    aws_iam_role_policy_attachment.fargate
-  ]
+
+  instance_types = [ var.ec2_instance_type ]
+
 }
 
 
+# resource "aws_eks_fargate_profile" "fargate" {
 
-// Create Instance Profile
-resource "aws_iam_instance_profile" "karpenter" {
-  name = "${var.eks_cluster_name}-karpenter-profile"
-  role = aws_iam_role.karpenter_node.name
-}
+#   cluster_name = aws_eks_cluster.eks.name
 
-// Create Fargate Profile for Karpenter
-resource "aws_eks_fargate_profile" "karpenter" {
+#   fargate_profile_name = "kube-system"
 
-  cluster_name = aws_eks_cluster.eks.name
+#   pod_execution_role_arn = aws_iam_role.fargate.arn
 
-  fargate_profile_name = "karpenter"
+#   subnet_ids = aws_subnet.private[*].id
 
-  pod_execution_role_arn = aws_iam_role.fargate.arn
+#   selector {
+#     namespace = "kube-system"
+#   }
 
-  subnet_ids = aws_subnet.private[*].id
+#   depends_on = [
+#     aws_iam_role_policy_attachment.fargate
+#   ]
+# }
 
-  selector {
-    namespace = "karpenter"
-  }
-}
 
-data "aws_iam_policy_document" "karpenter_assume_role" {
 
-  statement {
-    effect = "Allow"
+# // Create Instance Profile
+# resource "aws_iam_instance_profile" "karpenter" {
+#   name = "${var.eks_cluster_name}-karpenter-profile"
+#   role = aws_iam_role.karpenter_node.name
+# }
 
-    actions = [
-      "sts:AssumeRoleWithWebIdentity"
-    ]
+# // Create Fargate Profile for Karpenter
+# resource "aws_eks_fargate_profile" "karpenter" {
 
-    principals {
-      type = "Federated"
+#   cluster_name = aws_eks_cluster.eks.name
 
-      identifiers = [
-        aws_iam_openid_connect_provider.eks.arn
-      ]
-    }
+#   fargate_profile_name = "karpenter"
 
-    condition {
-      test = "StringEquals"
+#   pod_execution_role_arn = aws_iam_role.fargate.arn
 
-      variable = "${replace(
-        aws_iam_openid_connect_provider.eks.url,
-        "https://",
-        ""
-      )}:sub"
+#   subnet_ids = aws_subnet.private[*].id
 
-      values = [
-        "system:serviceaccount:karpenter:karpenter"
-      ]
-    }
-  }
-}
+#   selector {
+#     namespace = "karpenter"
+#   }
+# }
 
-resource "aws_iam_role" "karpenter_controller" {
+# data "aws_iam_policy_document" "karpenter_assume_role" {
 
-  name = "${var.eks_cluster_name}-karpenter-controller-role"
+#   statement {
+#     effect = "Allow"
 
-  assume_role_policy = data.aws_iam_policy_document.karpenter_assume_role.json
-}
+#     actions = [
+#       "sts:AssumeRoleWithWebIdentity"
+#     ]
 
-resource "aws_iam_policy" "karpenter_controller" {
+#     principals {
+#       type = "Federated"
 
-  name = "${var.eks_cluster_name}-karpenter-controller-policy"
+#       identifiers = [
+#         aws_iam_openid_connect_provider.eks.arn
+#       ]
+#     }
 
-  policy = jsonencode({
-    Version = "2012-10-17"
+#     condition {
+#       test = "StringEquals"
 
-    Statement = [
-      {
-        Effect = "Allow"
+#       variable = "${replace(
+#         aws_iam_openid_connect_provider.eks.url,
+#         "https://",
+#         ""
+#       )}:sub"
 
-        Action = [
-          "ec2:RunInstances",
-          "ec2:CreateFleet",
-          "ec2:TerminateInstances",
-          "ec2:DescribeInstances",
-          "ec2:DescribeInstanceTypes",
-          "ec2:DescribeSubnets",
-          "ec2:DescribeSecurityGroups",
-          "ec2:DescribeImages",
-          "ec2:CreateTags",
-          "ec2:DeleteTags",
+#       values = [
+#         "system:serviceaccount:karpenter:karpenter"
+#       ]
+#     }
+#   }
+# }
 
-          "ssm:GetParameter",
+# resource "aws_iam_role" "karpenter_controller" {
 
-          "eks:DescribeCluster",
+#   name = "${var.eks_cluster_name}-karpenter-controller-role"
 
-          "pricing:GetProducts",
+#   assume_role_policy = data.aws_iam_policy_document.karpenter_assume_role.json
+# }
 
-          "iam:PassRole",
-          "iam:GetInstanceProfile",
-          "iam:CreateInstanceProfile",
-          "iam:AddRoleToInstanceProfile",
-          "iam:RemoveRoleFromInstanceProfile",
-          "iam:DeleteInstanceProfile",
-          "iam:TagInstanceProfile"
-        ]
+# resource "aws_iam_policy" "karpenter_controller" {
 
-        Resource = "*"
-      }
-    ]
-  })
-}
+#   name = "${var.eks_cluster_name}-karpenter-controller-policy"
 
-resource "aws_iam_role_policy_attachment" "karpenter_controller" {
+#   policy = jsonencode({
+#     Version = "2012-10-17"
 
-  role       = aws_iam_role.karpenter_controller.name
+#     Statement = [
+#       {
+#         Effect = "Allow"
 
-  policy_arn = aws_iam_policy.karpenter_controller.arn
-}
+#         Action = [
+#           "ec2:RunInstances",
+#           "ec2:CreateFleet",
+#           "ec2:TerminateInstances",
+#           "ec2:DescribeInstances",
+#           "ec2:DescribeInstanceTypes",
+#           "ec2:DescribeSubnets",
+#           "ec2:DescribeSecurityGroups",
+#           "ec2:DescribeImages",
+#           "ec2:CreateTags",
+#           "ec2:DeleteTags",
 
-resource "kubernetes_namespace_v1" "karpenter" {
-  metadata {
-    name = "karpenter"
-  }
-}
+#           "ssm:GetParameter",
 
-resource "kubernetes_service_account_v1" "karpenter" {
+#           "eks:DescribeCluster",
 
-  metadata {
-    name      = "karpenter"
-    namespace = kubernetes_namespace_v1.karpenter.metadata[0].name
+#           "pricing:GetProducts",
 
-    annotations = {
-      "eks.amazonaws.com/role-arn" = aws_iam_role.karpenter_controller.arn
-    }
-  }
+#           "iam:PassRole",
+#           "iam:GetInstanceProfile",
+#           "iam:CreateInstanceProfile",
+#           "iam:AddRoleToInstanceProfile",
+#           "iam:RemoveRoleFromInstanceProfile",
+#           "iam:DeleteInstanceProfile",
+#           "iam:TagInstanceProfile"
+#         ]
 
-  depends_on = [
-    kubernetes_namespace_v1.karpenter
-  ]
-}
+#         Resource = "*"
+#       }
+#     ]
+#   })
+# }
 
-resource "helm_release" "karpenter" {
+# resource "aws_iam_role_policy_attachment" "karpenter_controller" {
 
-  name       = "karpenter"
-  namespace  = "karpenter"
+#   role       = aws_iam_role.karpenter_controller.name
 
-  repository = "oci://public.ecr.aws/karpenter"
-  chart      = "karpenter"
+#   policy_arn = aws_iam_policy.karpenter_controller.arn
+# }
 
-  version = "1.3.3"
+# resource "kubernetes_namespace_v1" "karpenter" {
+#   metadata {
+#     name = "karpenter"
+#   }
+# }
 
-  values = [
-    yamlencode({
-      settings = {
-        clusterName = aws_eks_cluster.eks.name
-      }
-      serviceAccount = {
-        create = false
-        name   = "karpenter"
-      }
-    })
-  ]
+# resource "kubernetes_service_account_v1" "karpenter" {
 
-  depends_on = [
-    kubernetes_service_account_v1.karpenter
-  ]
-}
+#   metadata {
+#     name      = "karpenter"
+#     namespace = kubernetes_namespace_v1.karpenter.metadata[0].name
 
-resource "aws_ec2_tag" "private_subnet_discovery" {
-  for_each    = toset(aws_subnet.private[*].id)
+#     annotations = {
+#       "eks.amazonaws.com/role-arn" = aws_iam_role.karpenter_controller.arn
+#     }
+#   }
 
-  resource_id = each.value
-  key         = "karpenter.sh/discovery"
-  value       = aws_eks_cluster.eks.name
-}
+#   depends_on = [
+#     kubernetes_namespace_v1.karpenter
+#   ]
+# }
 
-resource "aws_ec2_tag" "cluster_sg_discovery" {
-  resource_id = aws_eks_cluster.eks.vpc_config[*].cluster_security_group_id
+# resource "helm_release" "karpenter" {
 
-  key   = "karpenter.sh/discovery"
-  value = aws_eks_cluster.eks.name
-}
+#   name       = "karpenter"
+#   namespace  = "karpenter"
 
-resource "kubectl_manifest" "ec2_nodeclass" {
+#   repository = "oci://public.ecr.aws/karpenter"
+#   chart      = "karpenter"
 
-  depends_on = [
-    helm_release.karpenter
-  ]
+#   version = "1.3.3"
 
-  yaml_body = <<YAML
-apiVersion: karpenter.k8s.aws/v1
-kind: EC2NodeClass
-metadata:
-  name: default
-spec:
-  amiFamily: AL2023
+#   values = [
+#     yamlencode({
+#       settings = {
+#         clusterName = aws_eks_cluster.eks.name
+#       }
+#       serviceAccount = {
+#         create = false
+#         name   = "karpenter"
+#       }
+#     })
+#   ]
 
-  amiSelectorTerms:
-    - alias: al2023@latest
+#   depends_on = [
+#     kubernetes_service_account_v1.karpenter
+#   ]
+# }
 
-  role: ${aws_iam_role.karpenter_node.name}
+# resource "aws_ec2_tag" "private_subnet_discovery" {
+#   for_each    = toset(aws_subnet.private[*].id)
 
-  subnetSelectorTerms:
-  - tags:
-      karpenter.sh/discovery: ${aws_eks_cluster.eks.name}
+#   resource_id = each.value
+#   key         = "karpenter.sh/discovery"
+#   value       = aws_eks_cluster.eks.name
+# }
 
-  securityGroupSelectorTerms:
-  - tags:
-      karpenter.sh/discovery: ${aws_eks_cluster.eks.name}
-YAML
-}
+# resource "aws_ec2_tag" "cluster_sg_discovery" {
+#   resource_id = aws_eks_cluster.eks.vpc_config[*].cluster_security_group_id
 
-resource "kubectl_manifest" "nodepool" {
+#   key   = "karpenter.sh/discovery"
+#   value = aws_eks_cluster.eks.name
+# }
 
-  depends_on = [
-    kubectl_manifest.ec2_nodeclass
-  ]
+# resource "kubectl_manifest" "ec2_nodeclass" {
 
-  yaml_body = <<YAML
-apiVersion: karpenter.sh/v1
-kind: NodePool
-metadata:
-  name: default
-spec:
-  template:
-    spec:
-    #   taints:
-    #   - key: workload
-    #     value: app
-    #     effect: NoSchedule
+#   depends_on = [
+#     helm_release.karpenter
+#   ]
 
-      nodeClassRef:
-        group: karpenter.k8s.aws
-        kind: EC2NodeClass
-        name: default
+#   yaml_body = <<YAML
+# apiVersion: karpenter.k8s.aws/v1
+# kind: EC2NodeClass
+# metadata:
+#   name: default
+# spec:
+#   amiFamily: AL2023
 
-      requirements:
+#   amiSelectorTerms:
+#     - alias: al2023@latest
 
-      - key: kubernetes.io/arch
-        operator: In
-        values:
-        - amd64
+#   role: ${aws_iam_role.karpenter_node.name}
 
-      - key: karpenter.sh/capacity-type
-        operator: In
-        values:
-        - on-demand
+#   subnetSelectorTerms:
+#   - tags:
+#       karpenter.sh/discovery: ${aws_eks_cluster.eks.name}
 
-    #   - key: node.kubernetes.io/instance-type
-    #     operator: In
-    #     values:
-    #     - t3.large
-    #     - m5.large
+#   securityGroupSelectorTerms:
+#   - tags:
+#       karpenter.sh/discovery: ${aws_eks_cluster.eks.name}
+# YAML
+# }
 
-  limits:
-    cpu: 100
+# resource "kubectl_manifest" "nodepool" {
 
-  disruption:
-    consolidationPolicy: WhenEmptyOrUnderutilized
-    consolidateAfter: 30s
-YAML
-}
+#   depends_on = [
+#     kubectl_manifest.ec2_nodeclass
+#   ]
+
+#   yaml_body = <<YAML
+# apiVersion: karpenter.sh/v1
+# kind: NodePool
+# metadata:
+#   name: default
+# spec:
+#   template:
+#     spec:
+#     #   taints:
+#     #   - key: workload
+#     #     value: app
+#     #     effect: NoSchedule
+
+#       nodeClassRef:
+#         group: karpenter.k8s.aws
+#         kind: EC2NodeClass
+#         name: default
+
+#       requirements:
+
+#       - key: kubernetes.io/arch
+#         operator: In
+#         values:
+#         - amd64
+
+#       - key: karpenter.sh/capacity-type
+#         operator: In
+#         values:
+#         - on-demand
+
+#     #   - key: node.kubernetes.io/instance-type
+#     #     operator: In
+#     #     values:
+#     #     - t3.large
+#     #     - m5.large
+
+#   limits:
+#     cpu: 100
+
+#   disruption:
+#     consolidationPolicy: WhenEmptyOrUnderutilized
+#     consolidateAfter: 30s
+# YAML
+# }
