@@ -16,9 +16,6 @@
 # }
 
 
-data "aws_eks_cluster_auth" "eks" {
-  name = aws_eks_cluster.eks.name
-}
 
 # data "aws_iam_policy_document" "cluster_autoscaler_assume" {
 
