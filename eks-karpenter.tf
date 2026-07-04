@@ -329,3 +329,109 @@ spec:
     consolidateAfter: 30s
 YAML
 }
+
+
+data "aws_iam_policy_document" "alb_assume_role" {
+
+  statement {
+
+    effect = "Allow"
+
+    actions = [
+      "sts:AssumeRoleWithWebIdentity"
+    ]
+
+    principals {
+
+      type = "Federated"
+
+      identifiers = [
+        aws_iam_openid_connect_provider.this.arn
+      ]
+    }
+
+    condition {
+
+      test = "StringEquals"
+
+      variable = "${replace(
+        aws_iam_openid_connect_provider.this.url,
+        "https://",
+        ""
+      )}:sub"
+
+      values = [
+        "system:serviceaccount:kube-system:aws-load-balancer-controller"
+      ]
+    }
+  }
+}
+
+resource "aws_iam_role" "alb_controller" {
+
+  name = "${var.eks_cluster_name}-alb-controller"
+
+  assume_role_policy = data.aws_iam_policy_document.alb_assume_role.json
+
+  tags = {
+    Name = "${var.eks_cluster_name}-alb-controller"
+  }
+}
+
+
+resource "aws_iam_policy" "alb_controller" {
+
+  name = "${var.eks_cluster_name}-alb-controller"
+
+  policy = file("iam_policy.json")
+}
+
+resource "aws_iam_role_policy_attachment" "alb_controller" {
+
+  role = aws_iam_role.alb_controller.name
+
+  policy_arn = aws_iam_policy.alb_controller.arn
+}
+
+resource "helm_release" "aws_load_balancer_controller" {
+
+  name             = "aws-load-balancer-controller"
+
+  repository       = "https://aws.github.io/eks-charts"
+
+  chart            = "aws-load-balancer-controller"
+
+  namespace        = "kube-system"
+
+  create_namespace = false
+
+  version = "1.13.0"
+
+  values = [
+    yamlencode({
+
+      clusterName = aws_eks_cluster.eks.name
+
+      region = var.aws_region
+
+      vpcId = aws_vpc.main.id
+
+      serviceAccount = {
+
+        create = true
+
+        name = "aws-load-balancer-controller"
+
+        annotations = {
+
+          "eks.amazonaws.com/role-arn" = aws_iam_role.alb_controller.arn
+        }
+      }
+
+    })
+  ]
+
+  depends_on = [
+    aws_iam_role_policy_attachment.alb_controller
+  ]
+}
