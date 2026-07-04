@@ -97,7 +97,7 @@ resource "aws_route" "public_internet_access" {
   destination_cidr_block = "0.0.0.0/0"
   gateway_id             = aws_internet_gateway.igw.id
 }
-# Associate all public subnets → public RT
+# Associate all public subnets → public RT per AZ
 resource "aws_route_table_association" "public" {
   count          = length(var.az_zones)
   subnet_id      = aws_subnet.public[count.index].id
