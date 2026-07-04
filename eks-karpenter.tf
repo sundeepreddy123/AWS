@@ -33,7 +33,7 @@ resource "aws_eks_node_group" "node_group" {
   node_role_arn = aws_iam_role.node.arn
 
 
-  subnet_ids = aws_subnets.private[*].ids
+  subnet_ids = aws_subnets.private[*].id
 
   capacity_type = "ON_DEMAND"
 
