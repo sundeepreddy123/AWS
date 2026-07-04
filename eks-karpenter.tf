@@ -21,24 +21,24 @@ resource "aws_eks_cluster" "eks" {
 }
 
 
-# resource "aws_eks_fargate_profile" "fargate" {
+resource "aws_eks_fargate_profile" "fargate" {
 
-#   cluster_name = aws_eks_cluster.eks.name
+  cluster_name = aws_eks_cluster.eks.name
 
-#   fargate_profile_name = "kube-system"
+  fargate_profile_name = "kube-system"
 
-#   pod_execution_role_arn = aws_iam_role.fargate.arn
+  pod_execution_role_arn = aws_iam_role.fargate.arn
 
-#   subnet_ids = aws_subnet.private[*].id
+  subnet_ids = aws_subnet.private[*].id
 
-#   selector {
-#     namespace = "kube-system"
-#   }
+  selector {
+    namespace = "kube-system"
+  }
 
-#   depends_on = [
-#     aws_iam_role_policy_attachment.fargate
-#   ]
-# }
+  depends_on = [
+    aws_iam_role_policy_attachment.fargate
+  ]
+}
 
 
 
@@ -205,7 +205,7 @@ resource "helm_release" "karpenter" {
 }
 
 resource "aws_ec2_tag" "private_subnet_discovery" {
-  for_each    = toset(aws_subnets.private.ids)
+  for_each    = toset(aws_subnet.private[*].id)
 
   resource_id = each.value
   key         = "karpenter.sh/discovery"
@@ -213,7 +213,7 @@ resource "aws_ec2_tag" "private_subnet_discovery" {
 }
 
 resource "aws_ec2_tag" "cluster_sg_discovery" {
-  resource_id = aws_eks_cluster.eks.vpc_config[0].cluster_security_group_id
+  resource_id = aws_eks_cluster.eks.vpc_config[*].cluster_security_group_id
 
   key   = "karpenter.sh/discovery"
   value = aws_eks_cluster.eks.name

@@ -23,5 +23,5 @@ output "cluster_security_group_id" {
 }
 
 output "oidc_issuer" {
-  value = aws_eks_cluster.dev.identity[0].oidc[0].issuer
+  value = aws_eks_cluster.eks.identity[0].oidc[0].issuer
 }
