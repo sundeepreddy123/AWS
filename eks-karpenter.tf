@@ -75,28 +75,6 @@ resource "aws_iam_openid_connect_provider" "eks" {
     data.tls_certificate.eks.certificates[0].sha1_fingerprint
   ]
 }
-
-# // Create Instance Profile
-# resource "aws_iam_instance_profile" "karpenter" {
-#   name = "${var.eks_cluster_name}-karpenter-profile"
-#   role = aws_iam_role.karpenter_node.name
-# }
-
-# // Create Fargate Profile for Karpenter
-# resource "aws_eks_fargate_profile" "karpenter" {
-
-#   cluster_name = aws_eks_cluster.eks.name
-
-#   fargate_profile_name = "karpenter"
-
-#   pod_execution_role_arn = aws_iam_role.fargate.arn
-
-#   subnet_ids = aws_subnet.private[*].id
-
-#   selector {
-#     namespace = "karpenter"
-#   }
-# }
 // Phase 3: Create IAM role for Karpenter controller with trust relationship to the OIDC provider
 // 3.2 IAM Trust policy
 data "aws_iam_policy_document" "karpenter_assume_role" {
@@ -192,143 +170,143 @@ resource "aws_iam_role_policy_attachment" "karpenter_controller" {
 }
 
 // phase 4
-resource "helm_release" "karpenter" {
+# resource "helm_release" "karpenter" {
 
-  name       = "karpenter"
-  namespace  = "karpenter"
+#   name       = "karpenter"
+#   namespace  = "karpenter"
 
-  repository = "oci://public.ecr.aws/karpenter"
-  chart      = "karpenter"
-  create_namespace = true
+#   repository = "oci://public.ecr.aws/karpenter"
+#   chart      = "karpenter"
+#   create_namespace = true
 
-  version = "1.3.3"
-  wait = true
-  timeout = "600"
+#   version = "1.3.3"
+#   wait = true
+#   timeout = "600"
 
-  values = [
-    yamlencode({
-      settings = {
-        clusterName = aws_eks_cluster.eks.name
-        clusterEndpoint = aws_eks_cluster.eks.endpoint
-      }
-      serviceAccount = {
-        create = true
-        name   = "karpenter"
+#   values = [
+#     yamlencode({
+#       settings = {
+#         clusterName = aws_eks_cluster.eks.name
+#         clusterEndpoint = aws_eks_cluster.eks.endpoint
+#       }
+#       serviceAccount = {
+#         create = true
+#         name   = "karpenter"
 
-        annotations = {
-          "eks.amazonaws.com/role-arn" = aws_iam_role.karpenter_controller.arn
-        }
-      }
-    })
-  ]
-}
+#         annotations = {
+#           "eks.amazonaws.com/role-arn" = aws_iam_role.karpenter_controller.arn
+#         }
+#       }
+#     })
+#   ]
+# }
 
-resource "aws_ec2_tag" "private_subnet_discovery" {
-  for_each    = toset(aws_subnet.private[*].id)
+# resource "aws_ec2_tag" "private_subnet_discovery" {
+#   for_each    = toset(aws_subnet.private[*].id)
 
-  resource_id = each.value
-  key         = "karpenter.sh/discovery"
-  value       = aws_eks_cluster.eks.name
-}
+#   resource_id = each.value
+#   key         = "karpenter.sh/discovery"
+#   value       = aws_eks_cluster.eks.name
+# }
 
-resource "aws_ec2_tag" "cluster_sg_discovery" {
-  resource_id = aws_eks_cluster.eks.vpc_config[0].cluster_security_group_id
+# resource "aws_ec2_tag" "cluster_sg_discovery" {
+#   resource_id = aws_eks_cluster.eks.vpc_config[0].cluster_security_group_id
 
-  key   = "karpenter.sh/discovery"
-  value = aws_eks_cluster.eks.name
-}
+#   key   = "karpenter.sh/discovery"
+#   value = aws_eks_cluster.eks.name
+# }
 
-resource "kubectl_manifest" "ec2_nodeclass" {
+# resource "kubectl_manifest" "ec2_nodeclass" {
 
-  depends_on = [
-    helm_release.karpenter
-  ]
+#   depends_on = [
+#     helm_release.karpenter
+#   ]
 
-  yaml_body = <<YAML
-apiVersion: karpenter.k8s.aws/v1
-kind: EC2NodeClass
-metadata:
-  name: default
-spec:
-  amiFamily: AL2023
+#   yaml_body = <<YAML
+# apiVersion: karpenter.k8s.aws/v1
+# kind: EC2NodeClass
+# metadata:
+#   name: default
+# spec:
+#   amiFamily: AL2023
 
-  amiSelectorTerms:
-    - alias: al2023@latest
+#   amiSelectorTerms:
+#     - alias: al2023@latest
 
-  role: ${aws_iam_role.karpenter_node.name}
+#   role: ${aws_iam_role.karpenter_node.name}
 
-  subnetSelectorTerms:
-  - tags:
-      karpenter.sh/discovery: ${aws_eks_cluster.eks.name}
+#   subnetSelectorTerms:
+#   - tags:
+#       karpenter.sh/discovery: ${aws_eks_cluster.eks.name}
 
-  securityGroupSelectorTerms:
-  - tags:
-      karpenter.sh/discovery: ${aws_eks_cluster.eks.name}
-YAML
-}
+#   securityGroupSelectorTerms:
+#   - tags:
+#       karpenter.sh/discovery: ${aws_eks_cluster.eks.name}
+# YAML
+# }
 
-resource "kubectl_manifest" "nodepool" {
+# resource "kubectl_manifest" "nodepool" {
 
-  depends_on = [
-    kubectl_manifest.ec2_nodeclass,
-    aws_iam_role_policy_attachment.karpenter_controller,
-    aws_iam_role_policy_attachment.karpenter_node
-  ]
+#   depends_on = [
+#     kubectl_manifest.ec2_nodeclass,
+#     aws_iam_role_policy_attachment.karpenter_controller,
+#     aws_iam_role_policy_attachment.karpenter_node
+#   ]
 
-  yaml_body = <<YAML
-apiVersion: karpenter.sh/v1
-kind: NodePool
-metadata:
-  name: default
-spec:
-  template:
-    spec:
-    #   taints:
-    #   - key: workload
-    #     value: app
-    #     effect: NoSchedule
+#   yaml_body = <<YAML
+# apiVersion: karpenter.sh/v1
+# kind: NodePool
+# metadata:
+#   name: default
+# spec:
+#   template:
+#     spec:
+#     #   taints:
+#     #   - key: workload
+#     #     value: app
+#     #     effect: NoSchedule
 
-      nodeClassRef:
-        group: karpenter.k8s.aws
-        kind: EC2NodeClass
-        name: default
+#       nodeClassRef:
+#         group: karpenter.k8s.aws
+#         kind: EC2NodeClass
+#         name: default
 
-      requirements:
+#       requirements:
 
-      - key: kubernetes.io/arch
-        operator: In
-        values:
-        - amd64
+#       - key: kubernetes.io/arch
+#         operator: In
+#         values:
+#         - amd64
         
-      - key: kubernetes.io/os
-        operator: In
-        values:
-        - linux
+#       - key: kubernetes.io/os
+#         operator: In
+#         values:
+#         - linux
 
-      - key: karpenter.k8s.aws/instance-generation
-        operator: Gt
-        values:
-        - "3"
+#       - key: karpenter.k8s.aws/instance-generation
+#         operator: Gt
+#         values:
+#         - "3"
 
-      - key: karpenter.sh/capacity-type
-        operator: In
-        values:
-        - on-demand
+#       - key: karpenter.sh/capacity-type
+#         operator: In
+#         values:
+#         - on-demand
 
-    #   - key: node.kubernetes.io/instance-type
-    #     operator: In
-    #     values:
-    #     - t3.large
-    #     - m5.large
+#     #   - key: node.kubernetes.io/instance-type
+#     #     operator: In
+#     #     values:
+#     #     - t3.large
+#     #     - m5.large
 
-  limits:
-    cpu: 100
+#   limits:
+#     cpu: 100
 
-  disruption:
-    consolidationPolicy: WhenEmptyOrUnderutilized
-    consolidateAfter: 30s
-YAML
-}
+#   disruption:
+#     consolidationPolicy: WhenEmptyOrUnderutilized
+#     consolidateAfter: 30s
+# YAML
+# }
 
 
 # data "aws_iam_policy_document" "alb_assume_role" {
