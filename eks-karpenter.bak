@@ -1,19 +1,63 @@
+resource "aws_eks_cluster" "eks" {
+
+  name = var.eks_cluster_name
+
+  role_arn = aws_iam_role.eks.arn    ///creating role for eks cluster
+
+  version = var.eks_version
+
+  vpc_config {
+
+    subnet_ids = aws_subnet.private[*].id   // EKS cluster will be created in private subnets
+
+    endpoint_private_access = true // EKS cluster will be accessible only from private subnets
+
+    endpoint_public_access = true // EKS cluster will not be accessible from public subnets
+  }
+
+  depends_on = [
+    aws_iam_role_policy_attachment.eks // EKS cluster will be created only after the IAM role is attached to the policy 
+  ]
+}
+
+
+# resource "aws_eks_fargate_profile" "fargate" {
+
+#   cluster_name = aws_eks_cluster.eks.name
+
+#   fargate_profile_name = "kube-system"
+
+#   pod_execution_role_arn = aws_iam_role.fargate.arn
+
+#   subnet_ids = aws_subnet.private[*].id
+
+#   selector {
+#     namespace = "kube-system"
+#   }
+
+#   depends_on = [
+#     aws_iam_role_policy_attachment.fargate
+#   ]
+# }
+
+
+
 // Create Instance Profile
 resource "aws_iam_instance_profile" "karpenter" {
-  name = "${var.cluster_name}-karpenter-profile"
+  name = "${var.eks_cluster_name}-karpenter-profile"
   role = aws_iam_role.karpenter_node.name
 }
 
 // Create Fargate Profile for Karpenter
 resource "aws_eks_fargate_profile" "karpenter" {
 
-  cluster_name = aws_eks_cluster.this.name
+  cluster_name = aws_eks_cluster.eks.name
 
   fargate_profile_name = "karpenter"
 
   pod_execution_role_arn = aws_iam_role.fargate.arn
 
-  subnet_ids = data.aws_subnets.private.ids
+  subnet_ids = aws_subnet.private[*].id
 
   selector {
     namespace = "karpenter"
@@ -55,14 +99,14 @@ data "aws_iam_policy_document" "karpenter_assume_role" {
 
 resource "aws_iam_role" "karpenter_controller" {
 
-  name = "${var.cluster_name}-karpenter-controller-role"
+  name = "${var.eks_cluster_name}-karpenter-controller-role"
 
   assume_role_policy = data.aws_iam_policy_document.karpenter_assume_role.json
 }
 
 resource "aws_iam_policy" "karpenter_controller" {
 
-  name = "${var.cluster_name}-karpenter-controller-policy"
+  name = "${var.eks_cluster_name}-karpenter-controller-policy"
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -146,7 +190,7 @@ resource "helm_release" "karpenter" {
   values = [
     yamlencode({
       settings = {
-        clusterName = aws_eks_cluster.this.name
+        clusterName = aws_eks_cluster.eks.name
       }
       serviceAccount = {
         create = false
@@ -161,18 +205,18 @@ resource "helm_release" "karpenter" {
 }
 
 resource "aws_ec2_tag" "private_subnet_discovery" {
-  for_each    = toset(data.aws_subnets.private.ids)
+  for_each    = toset(aws_subnets.private.ids)
 
   resource_id = each.value
   key         = "karpenter.sh/discovery"
-  value       = aws_eks_cluster.this.name
+  value       = aws_eks_cluster.eks.name
 }
 
 resource "aws_ec2_tag" "cluster_sg_discovery" {
-  resource_id = data.aws_eks_cluster.this.vpc_config[0].cluster_security_group_id
+  resource_id = aws_eks_cluster.eks.vpc_config[0].cluster_security_group_id
 
   key   = "karpenter.sh/discovery"
-  value = aws_eks_cluster.this.name
+  value = aws_eks_cluster.eks.name
 }
 
 resource "kubectl_manifest" "ec2_nodeclass" {
@@ -196,11 +240,11 @@ spec:
 
   subnetSelectorTerms:
   - tags:
-      karpenter.sh/discovery: ${aws_eks_cluster.this.name}
+      karpenter.sh/discovery: ${aws_eks_cluster.eks.name}
 
   securityGroupSelectorTerms:
   - tags:
-      karpenter.sh/discovery: ${aws_eks_cluster.this.name}
+      karpenter.sh/discovery: ${aws_eks_cluster.eks.name}
 YAML
 }
 

@@ -127,7 +127,7 @@ resource "aws_iam_role_policy_attachment" "ecr" {
 # //// This is where Pod Identity connects the Kubernetes ServiceAccount to the IAM role.
 # resource "aws_eks_pod_identity_association" "cluster_autoscaler" {
 
-#   cluster_name = aws_eks_cluster.eks.name
+#   cluster_name = aws_eks_cluster.name
 
 #   namespace = "kube-system"
 
@@ -196,12 +196,12 @@ resource "aws_iam_role_policy_attachment" "ecr" {
 
 #   policy_arn = aws_iam_policy.lb_controller_policy.arn
 # }
-
+// -----------------------------------------------------------------------------------------------
 // fargate-role
 
 # resource "aws_iam_role" "fargate" {
 
-#   name = "${var.cluster_name}-fargate-role"
+#   name = "${var.eks_cluster_name}-fargate-role"
 
 #   assume_role_policy = jsonencode({
 #     Version = "2012-10-17"
@@ -226,43 +226,43 @@ resource "aws_iam_role_policy_attachment" "ecr" {
 #   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSFargatePodExecutionRolePolicy"
 # }
 
-# // Create Node IAM Role for karpenter
+// Create Node IAM Role for karpenter
 
-# resource "aws_iam_role" "karpenter_node" {
-#   name = "${var.cluster_name}-karpenter-node-role"
+resource "aws_iam_role" "karpenter_node" {
+  name = "${var.eks_cluster_name}-karpenter-node-role"
 
-#   assume_role_policy = jsonencode({
-#     Version = "2012-10-17"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
 
-#     Statement = [{
-#       Effect = "Allow"
+    Statement = [{
+      Effect = "Allow"
 
-#       Principal = {
-#         Service = "ec2.amazonaws.com"
-#       }
+      Principal = {
+        Service = "ec2.amazonaws.com"
+      }
 
-#       Action = "sts:AssumeRole"
-#     }]
-#   })
-# }
+      Action = "sts:AssumeRole"
+    }]
+  })
+}
 
-# // Attach policies to karpenter node role
-# resource "aws_iam_role_policy_attachment" "karpenter_node" {
-#   role       = aws_iam_role.karpenter_node.name
-#   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
-# }
+// Attach policies to karpenter node role
+resource "aws_iam_role_policy_attachment" "karpenter_node" {
+  role       = aws_iam_role.karpenter_node.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
+}
 
-# resource "aws_iam_role_policy_attachment" "karpenter_cni" {
-#   role       = aws_iam_role.karpenter_node.name
-#   policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
-# }
+resource "aws_iam_role_policy_attachment" "karpenter_cni" {
+  role       = aws_iam_role.karpenter_node.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
+}
 
-# resource "aws_iam_role_policy_attachment" "karpenter_registry" {
-#   role       = aws_iam_role.karpenter_node.name
-#   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
-# }
+resource "aws_iam_role_policy_attachment" "karpenter_registry" {
+  role       = aws_iam_role.karpenter_node.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+}
 
-# resource "aws_iam_role_policy_attachment" "karpenter_spot" {
-#   role       = aws_iam_role.karpenter_node.name
-#   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
-# }
+resource "aws_iam_role_policy_attachment" "karpenter_spot" {
+  role       = aws_iam_role.karpenter_node.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}

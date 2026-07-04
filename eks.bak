@@ -21,76 +21,76 @@ resource "aws_eks_cluster" "eks" {
 }
 
 
-# resource "aws_eks_node_group" "general" {
+resource "aws_eks_node_group" "node_group" {
 
 
-#   cluster_name = aws_eks_cluster.eks.name
+  cluster_name = aws_eks_cluster.eks.name
 
 
-#   node_group_name = "general"
+  node_group_name = "eks-node-groups"
 
 
-#   node_role_arn = aws_iam_role.node.arn
+  node_role_arn = aws_iam_role.node.arn
 
 
-#   subnet_ids = data.aws_subnets.private.ids
+  subnet_ids = data.aws_subnets.private.ids
 
-#   capacity_type = "ON_DEMAND"
-
-
-#   scaling_config {
-
-#     desired_size = 9
-
-#     max_size = 10
-
-#     min_size = 3
-
-#   }
+  capacity_type = "ON_DEMAND"
 
 
-#   instance_types = [ var.ec2_instance_type ]
+  scaling_config {
 
-# }
+    desired_size = 9
+
+    max_size = 10
+
+    min_size = 3
+
+  }
 
 
-# resource "helm_release" "cluster_autoscaler" {
+  instance_types = [ var.ec2_instance_type ]
 
-#   name = "cluster-autoscaler"
+}
 
-#   repository = "https://kubernetes.github.io/autoscaler"
 
-#   chart = "cluster-autoscaler"
+resource "helm_release" "cluster_autoscaler" {
 
-#   namespace = "kube-system"
+  name = "cluster-autoscaler"
 
-#   version = "9.46.6"
+  repository = "https://kubernetes.github.io/autoscaler"
 
-#   set = [{
+  chart = "cluster-autoscaler"
 
-#     name = "autoDiscovery.clusterName"
+  namespace = "kube-system"
 
-#     value = aws_eks_cluster.eks.name
-#   },
-#   {
+  version = "9.46.6"
 
-#     name = "awsRegion"
+  set = [{
 
-#     value = var.aws_region
-#   },
+    name = "autoDiscovery.clusterName"
 
-#   {
+    value = aws_eks_cluster.eks.name
+  },
+  {
 
-#     name = "rbac.serviceAccount.create"
+    name = "awsRegion"
 
-#     value = "true"
-#   }]
+    value = var.aws_region
+  },
 
-#   depends_on = [
+  {
 
-#     helm_release.metrics_server,
+    name = "rbac.serviceAccount.create"
 
-#     aws_eks_pod_identity_association.cluster_autoscaler
+    value = "true"
+  }]
 
-#   ]
-# }
+  depends_on = [
+
+    helm_release.metrics_server,
+
+    aws_eks_pod_identity_association.cluster_autoscaler
+
+  ]
+}
