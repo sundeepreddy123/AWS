@@ -53,27 +53,18 @@ resource "aws_eks_node_group" "node_group" {
 
 }
 
+resource "aws_iam_openid_connect_provider" "eks" {
 
-# resource "aws_eks_fargate_profile" "fargate" {
+  url = data.aws_eks_cluster.eks.identity[0].oidc[0].issuer
 
-#   cluster_name = aws_eks_cluster.eks.name
+  client_id_list = [
+    "sts.amazonaws.com"
+  ]
 
-#   fargate_profile_name = "kube-system"
-
-#   pod_execution_role_arn = aws_iam_role.fargate.arn
-
-#   subnet_ids = aws_subnet.private[*].id
-
-#   selector {
-#     namespace = "kube-system"
-#   }
-
-#   depends_on = [
-#     aws_iam_role_policy_attachment.fargate
-#   ]
-# }
-
-
+  thumbprint_list = [
+    data.tls_certificate.eks.certificates[0].sha1_fingerprint
+  ]
+}
 
 # // Create Instance Profile
 # resource "aws_iam_instance_profile" "karpenter" {
