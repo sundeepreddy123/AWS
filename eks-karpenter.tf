@@ -202,11 +202,14 @@ resource "helm_release" "karpenter" {
   create_namespace = true
 
   version = "1.3.3"
+  wait = true
+  timeout = "600"
 
   values = [
     yamlencode({
       settings = {
         clusterName = aws_eks_cluster.eks.name
+        clusterEndpoint = aws_eks_cluster.eks.endpoint
       }
       serviceAccount = {
         create = true
@@ -229,7 +232,7 @@ resource "aws_ec2_tag" "private_subnet_discovery" {
 }
 
 resource "aws_ec2_tag" "cluster_sg_discovery" {
-  resource_id = aws_eks_cluster.eks.vpc_config[*].cluster_security_group_id
+  resource_id = aws_eks_cluster.eks.vpc_config[0].cluster_security_group_id
 
   key   = "karpenter.sh/discovery"
   value = aws_eks_cluster.eks.name
@@ -267,7 +270,9 @@ YAML
 resource "kubectl_manifest" "nodepool" {
 
   depends_on = [
-    kubectl_manifest.ec2_nodeclass
+    kubectl_manifest.ec2_nodeclass,
+    aws_iam_role_policy_attachment.karpenter_controller,
+    aws_iam_role_policy_attachment.karpenter_node
   ]
 
   yaml_body = <<YAML
@@ -294,6 +299,16 @@ spec:
         operator: In
         values:
         - amd64
+        
+      - key: kubernetes.io/os
+        operator: In
+        values:
+        - linux
+
+      - key: karpenter.k8s.aws/instance-generation
+        operator: Gt
+        values:
+        - "3"
 
       - key: karpenter.sh/capacity-type
         operator: In
