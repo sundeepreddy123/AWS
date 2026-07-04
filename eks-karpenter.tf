@@ -77,97 +77,97 @@ resource "aws_iam_openid_connect_provider" "eks" {
 }
 // Phase 3: Create IAM role for Karpenter controller with trust relationship to the OIDC provider
 // 3.2 IAM Trust policy
-data "aws_iam_policy_document" "karpenter_assume_role" {
+# data "aws_iam_policy_document" "karpenter_assume_role" {
 
-  statement {
-    effect = "Allow"
+#   statement {
+#     effect = "Allow"
 
-    actions = [
-      "sts:AssumeRoleWithWebIdentity"  /// This role can only assumed using the web identity token
-    ]
+#     actions = [
+#       "sts:AssumeRoleWithWebIdentity"  /// This role can only assumed using the web identity token
+#     ]
 
-    principals {
-      type = "Federated"
+#     principals {
+#       type = "Federated"
 
-      identifiers = [
-        aws_iam_openid_connect_provider.eks.arn  /// trust tokens issued by this specific OIDC provider
-      ]
-    }
+#       identifiers = [
+#         aws_iam_openid_connect_provider.eks.arn  /// trust tokens issued by this specific OIDC provider
+#       ]
+#     }
 
-    condition {
-      test = "StringEquals"
+#     condition {
+#       test = "StringEquals"
 
-      variable = "${replace(
-        aws_iam_openid_connect_provider.eks.url,
-        "https://",
-        ""
-      )}:sub"
+#       variable = "${replace(
+#         aws_iam_openid_connect_provider.eks.url,
+#         "https://",
+#         ""
+#       )}:sub"
 
-      values = [
-        "system:serviceaccount:karpenter:karpenter"
-      ]
-    }
-  }
-}
-// 3.2 create the IAM role
+#       values = [
+#         "system:serviceaccount:karpenter:karpenter"
+#       ]
+#     }
+#   }
+# }
+# // 3.2 create the IAM role
 
-resource "aws_iam_role" "karpenter_controller" {
+# resource "aws_iam_role" "karpenter_controller" {
 
-  name = "${var.eks_cluster_name}-karpenter-controller-role"
+#   name = "${var.eks_cluster_name}-karpenter-controller-role"
 
-  assume_role_policy = data.aws_iam_policy_document.karpenter_assume_role.json
-}
-// 3.3 attched policy
-resource "aws_iam_policy" "karpenter_controller" {
+#   assume_role_policy = data.aws_iam_policy_document.karpenter_assume_role.json
+# }
+# // 3.3 attched policy
+# resource "aws_iam_policy" "karpenter_controller" {
 
-  name = "${var.eks_cluster_name}-karpenter-controller-policy"
+#   name = "${var.eks_cluster_name}-karpenter-controller-policy"
 
-  policy = jsonencode({
-    Version = "2012-10-17"
+#   policy = jsonencode({
+#     Version = "2012-10-17"
 
-    Statement = [
-      {
-        Effect = "Allow"
+#     Statement = [
+#       {
+#         Effect = "Allow"
 
-        Action = [
-          "ec2:RunInstances",
-          "ec2:CreateFleet",
-          "ec2:TerminateInstances",
-          "ec2:DescribeInstances",
-          "ec2:DescribeInstanceTypes",
-          "ec2:DescribeSubnets",
-          "ec2:DescribeSecurityGroups",
-          "ec2:DescribeImages",
-          "ec2:CreateTags",
-          "ec2:DeleteTags",
+#         Action = [
+#           "ec2:RunInstances",
+#           "ec2:CreateFleet",
+#           "ec2:TerminateInstances",
+#           "ec2:DescribeInstances",
+#           "ec2:DescribeInstanceTypes",
+#           "ec2:DescribeSubnets",
+#           "ec2:DescribeSecurityGroups",
+#           "ec2:DescribeImages",
+#           "ec2:CreateTags",
+#           "ec2:DeleteTags",
 
-          "ssm:GetParameter",
+#           "ssm:GetParameter",
 
-          "eks:DescribeCluster",
+#           "eks:DescribeCluster",
 
-          "pricing:GetProducts",
+#           "pricing:GetProducts",
 
-          "iam:PassRole",
-          "iam:GetInstanceProfile",
-          "iam:CreateInstanceProfile",
-          "iam:AddRoleToInstanceProfile",
-          "iam:RemoveRoleFromInstanceProfile",
-          "iam:DeleteInstanceProfile",
-          "iam:TagInstanceProfile"
-        ]
+#           "iam:PassRole",
+#           "iam:GetInstanceProfile",
+#           "iam:CreateInstanceProfile",
+#           "iam:AddRoleToInstanceProfile",
+#           "iam:RemoveRoleFromInstanceProfile",
+#           "iam:DeleteInstanceProfile",
+#           "iam:TagInstanceProfile"
+#         ]
 
-        Resource = "*"
-      }
-    ]
-  })
-}
+#         Resource = "*"
+#       }
+#     ]
+#   })
+# }
 
-resource "aws_iam_role_policy_attachment" "karpenter_controller" {
+# resource "aws_iam_role_policy_attachment" "karpenter_controller" {
 
-  role       = aws_iam_role.karpenter_controller.name
+#   role       = aws_iam_role.karpenter_controller.name
 
-  policy_arn = aws_iam_policy.karpenter_controller.arn
-}
+#   policy_arn = aws_iam_policy.karpenter_controller.arn
+# }
 
 // phase 4
 # resource "helm_release" "karpenter" {
