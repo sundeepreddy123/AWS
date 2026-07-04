@@ -15,9 +15,6 @@
 #   }
 # }
 
-data "aws_eks_cluster" "eks" {
-  name = aws_eks_cluster.eks.name       /// We need to read information such as: OIDC Issuer URL, Cluster CA, Endpoint. Terraform asks AWS: "Give me information about my EKS cluster."
-}
 
 # data "aws_eks_cluster_auth" "eks" {
 #   name = aws_eks_cluster.eks.name
@@ -48,9 +45,7 @@ data "aws_eks_cluster" "eks" {
 #   }
 # }
 
-data "tls_certificate" "eks" {
-  url = aws_eks_cluster.eks.identity[0].oidc[0].issuer /// AWS IAM needs the SHA1 fingerprint of the OIDC certificate so it can trust tokens issued by the cluster
-}
+
 
 # resource "aws_iam_openid_connect_provider" "eks" {
 

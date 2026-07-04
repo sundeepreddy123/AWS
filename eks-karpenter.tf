@@ -53,6 +53,16 @@ resource "aws_eks_node_group" "node_group" {
 
 }
 
+// phase 2: Create OIDC provider for the EKS cluster to allow IAM roles for service accounts (IRSA)
+
+data "tls_certificate" "eks" {
+  url = aws_eks_cluster.eks.identity[0].oidc[0].issuer /// AWS IAM needs the SHA1 fingerprint of the OIDC certificate so it can trust tokens issued by the cluster
+}
+
+data "aws_eks_cluster" "eks" {
+  name = aws_eks_cluster.eks.name       /// We need to read information such as: OIDC Issuer URL, Cluster CA, Endpoint. Terraform asks AWS: "Give me information about my EKS cluster."
+}
+
 resource "aws_iam_openid_connect_provider" "eks" {
 
   url = data.aws_eks_cluster.eks.identity[0].oidc[0].issuer
@@ -87,146 +97,128 @@ resource "aws_iam_openid_connect_provider" "eks" {
 #     namespace = "karpenter"
 #   }
 # }
+// Phase 3: Create IAM role for Karpenter controller with trust relationship to the OIDC provider
+// 3.2 IAM Trust policy
+data "aws_iam_policy_document" "karpenter_assume_role" {
 
-# data "aws_iam_policy_document" "karpenter_assume_role" {
+  statement {
+    effect = "Allow"
 
-#   statement {
-#     effect = "Allow"
+    actions = [
+      "sts:AssumeRoleWithWebIdentity"  /// This role can only assumed using the web identity token
+    ]
 
-#     actions = [
-#       "sts:AssumeRoleWithWebIdentity"
-#     ]
+    principals {
+      type = "Federated"
 
-#     principals {
-#       type = "Federated"
+      identifiers = [
+        aws_iam_openid_connect_provider.eks.arn  /// trust tokens issued by this specific OIDC provider
+      ]
+    }
 
-#       identifiers = [
-#         aws_iam_openid_connect_provider.eks.arn
-#       ]
-#     }
+    condition {
+      test = "StringEquals"
 
-#     condition {
-#       test = "StringEquals"
+      variable = "${replace(
+        aws_iam_openid_connect_provider.eks.url,
+        "https://",
+        ""
+      )}:sub"
 
-#       variable = "${replace(
-#         aws_iam_openid_connect_provider.eks.url,
-#         "https://",
-#         ""
-#       )}:sub"
+      values = [
+        "system:serviceaccount:karpenter:karpenter"
+      ]
+    }
+  }
+}
+// 3.2 create the IAM role
 
-#       values = [
-#         "system:serviceaccount:karpenter:karpenter"
-#       ]
-#     }
-#   }
-# }
+resource "aws_iam_role" "karpenter_controller" {
 
-# resource "aws_iam_role" "karpenter_controller" {
+  name = "${var.eks_cluster_name}-karpenter-controller-role"
 
-#   name = "${var.eks_cluster_name}-karpenter-controller-role"
+  assume_role_policy = data.aws_iam_policy_document.karpenter_assume_role.json
+}
+// 3.3 attched policy
+resource "aws_iam_policy" "karpenter_controller" {
 
-#   assume_role_policy = data.aws_iam_policy_document.karpenter_assume_role.json
-# }
+  name = "${var.eks_cluster_name}-karpenter-controller-policy"
 
-# resource "aws_iam_policy" "karpenter_controller" {
+  policy = jsonencode({
+    Version = "2012-10-17"
 
-#   name = "${var.eks_cluster_name}-karpenter-controller-policy"
+    Statement = [
+      {
+        Effect = "Allow"
 
-#   policy = jsonencode({
-#     Version = "2012-10-17"
+        Action = [
+          "ec2:RunInstances",
+          "ec2:CreateFleet",
+          "ec2:TerminateInstances",
+          "ec2:DescribeInstances",
+          "ec2:DescribeInstanceTypes",
+          "ec2:DescribeSubnets",
+          "ec2:DescribeSecurityGroups",
+          "ec2:DescribeImages",
+          "ec2:CreateTags",
+          "ec2:DeleteTags",
 
-#     Statement = [
-#       {
-#         Effect = "Allow"
+          "ssm:GetParameter",
 
-#         Action = [
-#           "ec2:RunInstances",
-#           "ec2:CreateFleet",
-#           "ec2:TerminateInstances",
-#           "ec2:DescribeInstances",
-#           "ec2:DescribeInstanceTypes",
-#           "ec2:DescribeSubnets",
-#           "ec2:DescribeSecurityGroups",
-#           "ec2:DescribeImages",
-#           "ec2:CreateTags",
-#           "ec2:DeleteTags",
+          "eks:DescribeCluster",
 
-#           "ssm:GetParameter",
+          "pricing:GetProducts",
 
-#           "eks:DescribeCluster",
+          "iam:PassRole",
+          "iam:GetInstanceProfile",
+          "iam:CreateInstanceProfile",
+          "iam:AddRoleToInstanceProfile",
+          "iam:RemoveRoleFromInstanceProfile",
+          "iam:DeleteInstanceProfile",
+          "iam:TagInstanceProfile"
+        ]
 
-#           "pricing:GetProducts",
+        Resource = "*"
+      }
+    ]
+  })
+}
 
-#           "iam:PassRole",
-#           "iam:GetInstanceProfile",
-#           "iam:CreateInstanceProfile",
-#           "iam:AddRoleToInstanceProfile",
-#           "iam:RemoveRoleFromInstanceProfile",
-#           "iam:DeleteInstanceProfile",
-#           "iam:TagInstanceProfile"
-#         ]
+resource "aws_iam_role_policy_attachment" "karpenter_controller" {
 
-#         Resource = "*"
-#       }
-#     ]
-#   })
-# }
+  role       = aws_iam_role.karpenter_controller.name
 
-# resource "aws_iam_role_policy_attachment" "karpenter_controller" {
+  policy_arn = aws_iam_policy.karpenter_controller.arn
+}
 
-#   role       = aws_iam_role.karpenter_controller.name
+// phase 4
+resource "helm_release" "karpenter" {
 
-#   policy_arn = aws_iam_policy.karpenter_controller.arn
-# }
+  name       = "karpenter"
+  namespace  = "karpenter"
 
-# resource "kubernetes_namespace_v1" "karpenter" {
-#   metadata {
-#     name = "karpenter"
-#   }
-# }
+  repository = "oci://public.ecr.aws/karpenter"
+  chart      = "karpenter"
+  create_namespace = true
 
-# resource "kubernetes_service_account_v1" "karpenter" {
+  version = "1.3.3"
 
-#   metadata {
-#     name      = "karpenter"
-#     namespace = kubernetes_namespace_v1.karpenter.metadata[0].name
+  values = [
+    yamlencode({
+      settings = {
+        clusterName = aws_eks_cluster.eks.name
+      }
+      serviceAccount = {
+        create = true
+        name   = "karpenter"
 
-#     annotations = {
-#       "eks.amazonaws.com/role-arn" = aws_iam_role.karpenter_controller.arn
-#     }
-#   }
-
-#   depends_on = [
-#     kubernetes_namespace_v1.karpenter
-#   ]
-# }
-
-# resource "helm_release" "karpenter" {
-
-#   name       = "karpenter"
-#   namespace  = "karpenter"
-
-#   repository = "oci://public.ecr.aws/karpenter"
-#   chart      = "karpenter"
-
-#   version = "1.3.3"
-
-#   values = [
-#     yamlencode({
-#       settings = {
-#         clusterName = aws_eks_cluster.eks.name
-#       }
-#       serviceAccount = {
-#         create = false
-#         name   = "karpenter"
-#       }
-#     })
-#   ]
-
-#   depends_on = [
-#     kubernetes_service_account_v1.karpenter
-#   ]
-# }
+        annotations = {
+          "eks.amazonaws.com/role-arn" = aws_iam_role.karpenter_controller.arn
+        }
+      }
+    })
+  ]
+}
 
 # resource "aws_ec2_tag" "private_subnet_discovery" {
 #   for_each    = toset(aws_subnet.private[*].id)
