@@ -220,97 +220,97 @@ resource "helm_release" "karpenter" {
   ]
 }
 
-# resource "aws_ec2_tag" "private_subnet_discovery" {
-#   for_each    = toset(aws_subnet.private[*].id)
+resource "aws_ec2_tag" "private_subnet_discovery" {
+  for_each    = toset(aws_subnet.private[*].id)
 
-#   resource_id = each.value
-#   key         = "karpenter.sh/discovery"
-#   value       = aws_eks_cluster.eks.name
-# }
+  resource_id = each.value
+  key         = "karpenter.sh/discovery"
+  value       = aws_eks_cluster.eks.name
+}
 
-# resource "aws_ec2_tag" "cluster_sg_discovery" {
-#   resource_id = aws_eks_cluster.eks.vpc_config[*].cluster_security_group_id
+resource "aws_ec2_tag" "cluster_sg_discovery" {
+  resource_id = aws_eks_cluster.eks.vpc_config[*].cluster_security_group_id
 
-#   key   = "karpenter.sh/discovery"
-#   value = aws_eks_cluster.eks.name
-# }
+  key   = "karpenter.sh/discovery"
+  value = aws_eks_cluster.eks.name
+}
 
-# resource "kubectl_manifest" "ec2_nodeclass" {
+resource "kubectl_manifest" "ec2_nodeclass" {
 
-#   depends_on = [
-#     helm_release.karpenter
-#   ]
+  depends_on = [
+    helm_release.karpenter
+  ]
 
-#   yaml_body = <<YAML
-# apiVersion: karpenter.k8s.aws/v1
-# kind: EC2NodeClass
-# metadata:
-#   name: default
-# spec:
-#   amiFamily: AL2023
+  yaml_body = <<YAML
+apiVersion: karpenter.k8s.aws/v1
+kind: EC2NodeClass
+metadata:
+  name: default
+spec:
+  amiFamily: AL2023
 
-#   amiSelectorTerms:
-#     - alias: al2023@latest
+  amiSelectorTerms:
+    - alias: al2023@latest
 
-#   role: ${aws_iam_role.karpenter_node.name}
+  role: ${aws_iam_role.karpenter_node.name}
 
-#   subnetSelectorTerms:
-#   - tags:
-#       karpenter.sh/discovery: ${aws_eks_cluster.eks.name}
+  subnetSelectorTerms:
+  - tags:
+      karpenter.sh/discovery: ${aws_eks_cluster.eks.name}
 
-#   securityGroupSelectorTerms:
-#   - tags:
-#       karpenter.sh/discovery: ${aws_eks_cluster.eks.name}
-# YAML
-# }
+  securityGroupSelectorTerms:
+  - tags:
+      karpenter.sh/discovery: ${aws_eks_cluster.eks.name}
+YAML
+}
 
-# resource "kubectl_manifest" "nodepool" {
+resource "kubectl_manifest" "nodepool" {
 
-#   depends_on = [
-#     kubectl_manifest.ec2_nodeclass
-#   ]
+  depends_on = [
+    kubectl_manifest.ec2_nodeclass
+  ]
 
-#   yaml_body = <<YAML
-# apiVersion: karpenter.sh/v1
-# kind: NodePool
-# metadata:
-#   name: default
-# spec:
-#   template:
-#     spec:
-#     #   taints:
-#     #   - key: workload
-#     #     value: app
-#     #     effect: NoSchedule
+  yaml_body = <<YAML
+apiVersion: karpenter.sh/v1
+kind: NodePool
+metadata:
+  name: default
+spec:
+  template:
+    spec:
+    #   taints:
+    #   - key: workload
+    #     value: app
+    #     effect: NoSchedule
 
-#       nodeClassRef:
-#         group: karpenter.k8s.aws
-#         kind: EC2NodeClass
-#         name: default
+      nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
+        name: default
 
-#       requirements:
+      requirements:
 
-#       - key: kubernetes.io/arch
-#         operator: In
-#         values:
-#         - amd64
+      - key: kubernetes.io/arch
+        operator: In
+        values:
+        - amd64
 
-#       - key: karpenter.sh/capacity-type
-#         operator: In
-#         values:
-#         - on-demand
+      - key: karpenter.sh/capacity-type
+        operator: In
+        values:
+        - on-demand
 
-#     #   - key: node.kubernetes.io/instance-type
-#     #     operator: In
-#     #     values:
-#     #     - t3.large
-#     #     - m5.large
+    #   - key: node.kubernetes.io/instance-type
+    #     operator: In
+    #     values:
+    #     - t3.large
+    #     - m5.large
 
-#   limits:
-#     cpu: 100
+  limits:
+    cpu: 100
 
-#   disruption:
-#     consolidationPolicy: WhenEmptyOrUnderutilized
-#     consolidateAfter: 30s
-# YAML
-# }
+  disruption:
+    consolidationPolicy: WhenEmptyOrUnderutilized
+    consolidateAfter: 30s
+YAML
+}
