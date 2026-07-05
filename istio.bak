@@ -62,28 +62,28 @@ resource "helm_release" "istio_ingress" {
   wait = true
   reset_values = true
 
-  values = [file("istio/values-${var.env}.yaml")]
+  values = [file("istio/values-istio.yaml")]
 }
 
-resource "helm_release" "istio_ingress-internal" {
+# resource "helm_release" "istio_ingress-internal" {
 
-  depends_on = [
-    helm_release.istiod
-  ]
+#   depends_on = [
+#     helm_release.istiod
+#   ]
 
-  name = "istio-ingress-internal"
+#   name = "istio-ingress-internal"
 
-  repository = "https://istio-release.storage.googleapis.com/charts"
+#   repository = "https://istio-release.storage.googleapis.com/charts"
 
-  chart = "gateway"
+#   chart = "gateway"
 
-  namespace = "istio-ingress-internal"
-  create_namespace = true
-  timeout = 1200
+#   namespace = "istio-ingress-internal"
+#   create_namespace = true
+#   timeout = 1200
 
-  version = "1.28.10"
-  wait = true
-  reset_values = true
+#   version = "1.28.10"
+#   wait = true
+#   reset_values = true
 
-  values = [file("istio/values-${var.env}-int.yaml")]
-}
+#   values = [file("istio/values-${var.env}-int.yaml")]
+# }
