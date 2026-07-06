@@ -55,26 +55,26 @@ resource "aws_eks_node_group" "node_group" {
 
 // phase 2: Create OIDC provider for the EKS cluster to allow IAM roles for service accounts (IRSA)
 
-data "tls_certificate" "eks" {
-  url = aws_eks_cluster.eks.identity[0].oidc[0].issuer /// AWS IAM needs the SHA1 fingerprint of the OIDC certificate so it can trust tokens issued by the cluster
-}
+# data "tls_certificate" "eks" {
+#   url = aws_eks_cluster.eks.identity[0].oidc[0].issuer /// AWS IAM needs the SHA1 fingerprint of the OIDC certificate so it can trust tokens issued by the cluster
+# }
 
-data "aws_eks_cluster" "eks" {
-  name = aws_eks_cluster.eks.name       /// We need to read information such as: OIDC Issuer URL, Cluster CA, Endpoint. Terraform asks AWS: "Give me information about my EKS cluster."
-}
+# data "aws_eks_cluster" "eks" {
+#   name = aws_eks_cluster.eks.name       /// We need to read information such as: OIDC Issuer URL, Cluster CA, Endpoint. Terraform asks AWS: "Give me information about my EKS cluster."
+# }
 
-resource "aws_iam_openid_connect_provider" "eks" {
+# resource "aws_iam_openid_connect_provider" "eks" {
 
-  url = data.aws_eks_cluster.eks.identity[0].oidc[0].issuer
+#   url = data.aws_eks_cluster.eks.identity[0].oidc[0].issuer
 
-  client_id_list = [
-    "sts.amazonaws.com"
-  ]
+#   client_id_list = [
+#     "sts.amazonaws.com"
+#   ]
 
-  thumbprint_list = [
-    data.tls_certificate.eks.certificates[0].sha1_fingerprint
-  ]
-}
+#   thumbprint_list = [
+#     data.tls_certificate.eks.certificates[0].sha1_fingerprint
+#   ]
+# }
 // Phase 3: Create IAM role for Karpenter controller with trust relationship to the OIDC provider
 // 3.2 IAM Trust policy
 # data "aws_iam_policy_document" "karpenter_assume_role" {
