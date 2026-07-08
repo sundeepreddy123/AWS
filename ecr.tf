@@ -3,6 +3,7 @@ locals {
     "adservice",
     "cartservice",
     "checkoutservice",
+    "currencyservice",
     "emailservice",
     "frontend",
     "loadgenerator",
