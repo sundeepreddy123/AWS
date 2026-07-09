@@ -14,7 +14,7 @@ resource "helm_release" "istio_base" {
   wait = true
   reset_values = true
 
-  version = "1.28.10"
+  version = "1.30.2"
 
 }
 
@@ -34,7 +34,7 @@ resource "helm_release" "istiod" {
 
   namespace = "istio-system"
 
-  version = "1.28.10"
+  version = "1.30.2"
   reset_values = true
 
 #   values = [file("istiod-values.yaml")]
@@ -58,7 +58,7 @@ resource "helm_release" "istio_ingress" {
   create_namespace = true
   timeout = 1200
 
-  version = "1.28.10"
+  version = "1.30.2"
   wait = true
   reset_values = true
 
