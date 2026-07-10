@@ -309,107 +309,107 @@ YAML
 }
 
 
-data "aws_iam_policy_document" "alb_assume_role" {
+# data "aws_iam_policy_document" "alb_assume_role" {
 
-  statement {
+#   statement {
 
-    effect = "Allow"
+#     effect = "Allow"
 
-    actions = [
-      "sts:AssumeRoleWithWebIdentity"
-    ]
+#     actions = [
+#       "sts:AssumeRoleWithWebIdentity"
+#     ]
 
-    principals {
+#     principals {
 
-      type = "Federated"
+#       type = "Federated"
 
-      identifiers = [
-        aws_iam_openid_connect_provider.eks.arn
-      ]
-    }
+#       identifiers = [
+#         aws_iam_openid_connect_provider.eks.arn
+#       ]
+#     }
 
-    condition {
+#     condition {
 
-      test = "StringEquals"
+#       test = "StringEquals"
 
-      variable = "${replace(
-        aws_iam_openid_connect_provider.eks.url,
-        "https://",
-        ""
-      )}:sub"
+#       variable = "${replace(
+#         aws_iam_openid_connect_provider.eks.url,
+#         "https://",
+#         ""
+#       )}:sub"
 
-      values = [
-        "system:serviceaccount:kube-system:aws-load-balancer-controller"
-      ]
-    }
-  }
-}
+#       values = [
+#         "system:serviceaccount:kube-system:aws-load-balancer-controller"
+#       ]
+#     }
+#   }
+# }
 
-resource "aws_iam_role" "alb_controller" {
+# resource "aws_iam_role" "alb_controller" {
 
-  name = "${var.eks_cluster_name}-alb-controller"
+#   name = "${var.eks_cluster_name}-alb-controller"
 
-  assume_role_policy = data.aws_iam_policy_document.alb_assume_role.json
+#   assume_role_policy = data.aws_iam_policy_document.alb_assume_role.json
 
-  tags = {
-    Name = "${var.eks_cluster_name}-alb-controller"
-  }
-}
+#   tags = {
+#     Name = "${var.eks_cluster_name}-alb-controller"
+#   }
+# }
 
 
-resource "aws_iam_policy" "alb_controller" {
+# resource "aws_iam_policy" "alb_controller" {
 
-  name = "${var.eks_cluster_name}-alb-controller"
+#   name = "${var.eks_cluster_name}-alb-controller"
 
-  policy = file("iam_policy.json")
-}
+#   policy = file("iam_policy.json")
+# }
 
-resource "aws_iam_role_policy_attachment" "alb_controller" {
+# resource "aws_iam_role_policy_attachment" "alb_controller" {
 
-  role = aws_iam_role.alb_controller.name
+#   role = aws_iam_role.alb_controller.name
 
-  policy_arn = aws_iam_policy.alb_controller.arn
-}
+#   policy_arn = aws_iam_policy.alb_controller.arn
+# }
 
-resource "helm_release" "aws_load_balancer_controller" {
+# resource "helm_release" "aws_load_balancer_controller" {
 
-  name             = "aws-load-balancer-controller"
+#   name             = "aws-load-balancer-controller"
 
-  repository       = "https://aws.github.io/eks-charts"
+#   repository       = "https://aws.github.io/eks-charts"
 
-  chart            = "aws-load-balancer-controller"
+#   chart            = "aws-load-balancer-controller"
 
-  namespace        = "kube-system"
+#   namespace        = "kube-system"
 
-  create_namespace = false
+#   create_namespace = false
 
-  version = "1.13.0"
+#   version = "1.13.0"
 
-  values = [
-    yamlencode({
+#   values = [
+#     yamlencode({
 
-      clusterName = aws_eks_cluster.eks.name
+#       clusterName = aws_eks_cluster.eks.name
 
-      region = var.aws_region
+#       region = var.aws_region
 
-      vpcId = aws_vpc.main.id
+#       vpcId = aws_vpc.main.id
 
-      serviceAccount = {
+#       serviceAccount = {
 
-        create = true
+#         create = true
 
-        name = "aws-load-balancer-controller"
+#         name = "aws-load-balancer-controller"
 
-        annotations = {
+#         annotations = {
 
-          "eks.amazonaws.com/role-arn" = aws_iam_role.alb_controller.arn
-        }
-      }
+#           "eks.amazonaws.com/role-arn" = aws_iam_role.alb_controller.arn
+#         }
+#       }
 
-    })
-  ]
+#     })
+#   ]
 
-  depends_on = [
-    aws_iam_role_policy_attachment.alb_controller
-  ]
-}
+#   depends_on = [
+#     aws_iam_role_policy_attachment.alb_controller
+#   ]
+# }
